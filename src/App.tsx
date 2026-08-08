@@ -83,7 +83,6 @@ function Header({
           <span className="brand-mark">K602</span>
           <div>
             <strong>K602 Portal</strong>
-            <small>{currentModule.title}</small>
           </div>
         </button>
 
