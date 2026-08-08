@@ -61,105 +61,37 @@ function formatDate(value: string | null | undefined) {
   }).format(new Date(value))
 }
 
-import { PORTAL_MODULES, type PortalModule } from './config/modules'
-
 function Header({
   view,
   auth,
-  currentModule,
-  onSelectModule,
   onNavigate,
-  onOpenAuth,
   onSignOut,
 }: {
   view: View
   auth: AuthState
-  currentModule: PortalModule
-  onSelectModule: (mod: PortalModule) => void
   onNavigate: (view: View) => void
-  onOpenAuth: () => void
   onSignOut: () => void
 }) {
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
   return (
     <header className="topbar">
-      <div className="topbar-left">
-        <button className="brand" onClick={() => onNavigate('home')} aria-label="Về trang tổng quan K602">
-          <span className="brand-mark">K602</span>
-          <div>
-            <strong>K602 Portal</strong>
-            <small>Nền tảng Tri thức & Tiện ích</small>
-          </div>
-        </button>
-
-        <div className="category-dropdown-container" ref={menuRef}>
-          <button
-            className="category-selector-btn"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            aria-expanded={dropdownOpen}
-          >
-            <span className="cat-badge">{currentModule.badge}</span>
-            <span className="cat-name">{currentModule.shortTitle}</span>
-            <span className="cat-arrow">▾</span>
-          </button>
-
-          {dropdownOpen && (
-            <div className="category-dropdown-menu">
-              <div className="dropdown-title">Danh mục Chuyên mục Portal</div>
-              {PORTAL_MODULES.map((mod) => (
-                <button
-                  key={mod.id}
-                  className={`dropdown-item ${mod.id === currentModule.id ? 'active' : ''}`}
-                  onClick={() => {
-                    onSelectModule(mod)
-                    setDropdownOpen(false)
-                  }}
-                >
-                  <div className="dropdown-item-main">
-                    <strong>{mod.title}</strong>
-                    <small>{mod.description}</small>
-                  </div>
-                  <span className={`status-pill ${mod.active ? 'active' : 'coming'}`}>
-                    {mod.badge}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+      <button className="brand" onClick={() => onNavigate('home')} aria-label="Về trang chủ K602">
+        <span className="brand-mark">K602</span>
+        <div>
+          <strong>Ôn Thi GPLX Xe Máy A1</strong>
+          <small>Hệ Thống Sát Hạch Lý Thuyết 150 Câu</small>
         </div>
-      </div>
+      </button>
 
-      <nav aria-label="Điều hướng chính">
-        <button className={view === 'home' ? 'active' : ''} onClick={() => onNavigate('home')}>
-          Tổng quan
-        </button>
+      <div className="account-area">
         {auth.role === 'admin' && (
-          <button className={view === 'admin' ? 'active' : ''} onClick={() => onNavigate('admin')}>
+          <button className={`admin-nav-btn ${view === 'admin' ? 'active' : ''}`} onClick={() => onNavigate('admin')}>
             Quản trị
           </button>
         )}
-      </nav>
-      <div className="account-area">
-        {auth.user ? (
+        {auth.user && (
           <button className="account-button" onClick={onSignOut} title="Nhấn để đăng xuất">
             <span className="account-avatar">{(auth.displayName || auth.user.email || 'HV').slice(0, 2).toUpperCase()}</span>
             <span>{auth.displayName || auth.user.email}</span>
-          </button>
-        ) : (
-          <button className="device-mode-badge" onClick={onOpenAuth} title="Nhấn để xem thông tin tài khoản">
-            <span>Lưu trên thiết bị</span>
           </button>
         )}
       </div>
@@ -226,16 +158,12 @@ function ProgressRing({ score }: { score: number }) {
 
 function Home({
   state,
-  currentModule,
-  onSelectModule,
   examPanelRef,
   onStart,
   onStartChapter,
   onStartExam,
 }: {
   state: LocalState
-  currentModule: PortalModule
-  onSelectModule: (mod: PortalModule) => void
   examPanelRef: React.RefObject<HTMLDivElement | null>
   onStart: (mode: Exclude<StudyMode, 'exam'>) => void
   onStartChapter: (chapter: string) => void
@@ -271,20 +199,6 @@ function Home({
 
   return (
     <main className="page-shell">
-      {/* BAR CHỌN NHANH CÁC CHUYÊN MỤC PORTAL K602 */}
-      <div className="category-tabs-bar" aria-label="Chuyên mục Portal">
-        {PORTAL_MODULES.map((mod) => (
-          <button
-            key={mod.id}
-            className={`category-tab-chip ${mod.id === currentModule.id ? 'active' : ''}`}
-            onClick={() => onSelectModule(mod)}
-          >
-            <span>{mod.shortTitle}</span>
-            <small>{mod.badge}</small>
-          </button>
-        ))}
-      </div>
-
       <section className="hero-grid">
         <div className="hero-card">
           <div>
@@ -923,18 +837,6 @@ export default function App() {
     setView('study')
   }
 
-  const [currentModule, setCurrentModule] = useState<PortalModule>(PORTAL_MODULES[0])
-  const [toastMessage, setToastMessage] = useState<string | null>(null)
-
-  const handleSelectModule = (mod: PortalModule) => {
-    if (mod.active) {
-      setCurrentModule(mod)
-    } else {
-      setToastMessage(`Chuyên mục "${mod.title}" đang sẵn sàng để bạn bổ sung nội dung sau!`)
-      setTimeout(() => setToastMessage(null), 4500)
-    }
-  }
-
   const handleStartExam = (questionCount: number, durationMinutes: number) => {
     setExamProfile({
       name: `Thi thử ${questionCount} câu`,
@@ -979,26 +881,15 @@ export default function App() {
 
   return (
     <div className="app">
-      {toastMessage && (
-        <div className="toast-notification">
-          <span>💡 {toastMessage}</span>
-          <button onClick={() => setToastMessage(null)}>×</button>
-        </div>
-      )}
       <Header
         view={view}
         auth={auth}
-        currentModule={currentModule}
-        onSelectModule={handleSelectModule}
         onNavigate={setView}
-        onOpenAuth={() => setAuthOpen(true)}
         onSignOut={handleSignOut}
       />
       {view === 'home' && (
         <Home
           state={state}
-          currentModule={currentModule}
-          onSelectModule={handleSelectModule}
           examPanelRef={examPanelRef}
           onStart={startStudy}
           onStartChapter={startChapterStudy}
