@@ -103,7 +103,7 @@ button:focus-visible, input:focus-visible {
   flex-direction: column;
 }
 
-/* ==================== DEEP SLATE HEADER ==================== */
+/* ==================== TOPBAR HEADER & CATEGORY MENU ==================== */
 .topbar {
   position: sticky;
   top: 0;
@@ -115,9 +115,15 @@ button:focus-visible, input:focus-visible {
   justify-content: space-between;
   gap: 16px;
   border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(12px);
   box-shadow: var(--shadow-sm);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .brand {
@@ -128,8 +134,9 @@ button:focus-visible, input:focus-visible {
 }
 
 .brand-mark {
-  width: 40px;
+  width: 44px;
   height: 40px;
+  padding: 0 8px;
   display: grid;
   place-items: center;
   border-radius: 10px;
@@ -137,8 +144,8 @@ button:focus-visible, input:focus-visible {
   background: var(--dark-bg);
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
   font-weight: 900;
-  font-size: 15px;
-  letter-spacing: -0.02em;
+  font-size: 14px;
+  letter-spacing: 0.02em;
 }
 
 .brand strong {
@@ -153,6 +160,135 @@ button:focus-visible, input:focus-visible {
   display: block;
   color: var(--text-muted);
   font-size: 11px;
+}
+
+/* CATEGORY DROPDOWN MENU SYSTEM */
+.category-dropdown-container {
+  position: relative;
+}
+
+.category-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border-strong);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dark-bg);
+  min-height: 38px;
+}
+
+.category-selector-btn:hover {
+  border-color: var(--primary);
+  background: white;
+}
+
+.cat-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.cat-name {
+  font-weight: 700;
+}
+
+.cat-arrow {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.category-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  background: white;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-title {
+  padding: 6px 10px 4px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  text-align: left;
+  min-height: auto;
+}
+
+.dropdown-item:hover {
+  background: var(--surface-alt);
+}
+
+.dropdown-item.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.dropdown-item-main strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dark-bg);
+}
+
+.dropdown-item-main small {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.status-pill {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.status-pill.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.status-pill.coming {
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
 }
 
 .topbar nav {
@@ -223,7 +359,7 @@ button:focus-visible, input:focus-visible {
   font-size: 12px;
 }
 
-/* ==================== MOBILE BOTTOM NAV BAR ==================== */
+/* MOBILE BOTTOM NAV */
 .mobile-bottom-nav {
   position: fixed;
   bottom: 0;
@@ -261,10 +397,105 @@ button:focus-visible, input:focus-visible {
 .page-shell {
   width: min(1040px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 24px 0 80px;
+  padding: 20px 0 80px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
+}
+
+/* CATEGORY TABS BAR (HORIZONTAL SCROLLING CHIPS) */
+.category-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.category-tabs-bar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.category-tabs-bar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+.category-tab-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  min-height: 40px;
+  box-shadow: var(--shadow-sm);
+}
+
+.category-tab-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.category-tab-chip.active {
+  background: var(--dark-bg);
+  border-color: var(--dark-bg);
+  color: white;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.category-tab-chip small {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.category-tab-chip.active small {
+  background: var(--cyan);
+  color: #0f172a;
+}
+
+/* TOAST NOTIFICATION */
+.toast-notification {
+  position: fixed;
+  top: 76px;
+  right: 20px;
+  z-index: 100;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  background: var(--dark-bg);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--cyan-border);
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toast-notification button {
+  border: 0;
+  color: #94a3b8;
+  font-size: 18px;
+  padding: 0;
+  min-height: auto;
 }
 
 /* ==================== HERO SECTION (BLUE + SLATE + CYAN) ==================== */
@@ -405,7 +636,7 @@ button:focus-visible, input:focus-visible {
   letter-spacing: 0.05em;
 }
 
-/* ==================== PRACTICE MODES ==================== */
+/* PRACTICE MODES */
 .section-title {
   font-size: 18px;
   font-weight: 800;
@@ -433,7 +664,7 @@ button:focus-visible, input:focus-visible {
 }
 
 .quick-card:hover {
-  border-color: var(--primary-border);
+  border-color: var(--primary);
   box-shadow: var(--shadow-md);
 }
 
@@ -457,7 +688,7 @@ button:focus-visible, input:focus-visible {
   font-weight: 800;
 }
 
-/* ==================== DASHBOARD & CHAPTERS ==================== */
+/* DASHBOARD & CHAPTERS */
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
@@ -512,7 +743,7 @@ button:focus-visible, input:focus-visible {
 
 .chapter-row:hover {
   background: white;
-  border-color: var(--primary-border);
+  border-color: var(--primary);
 }
 
 .chapter-row-header {
@@ -548,7 +779,7 @@ button:focus-visible, input:focus-visible {
   background: linear-gradient(90deg, #2563eb, #06b6d4);
 }
 
-/* ==================== CUSTOM EXAM PANEL (DEEP SLATE + CYAN ACCENT) ==================== */
+/* CUSTOM EXAM PANEL */
 .exam-panel {
   padding: 26px;
   color: white;
@@ -687,7 +918,7 @@ button:focus-visible, input:focus-visible {
   background: var(--primary-hover);
 }
 
-/* ==================== BUTTON SYSTEM ==================== */
+/* BUTTON SYSTEM */
 .primary-button, .outline-button, .back-button, .unsure-button {
   border-radius: var(--radius-sm);
   padding: 10px 20px;
@@ -719,7 +950,7 @@ button:focus-visible, input:focus-visible {
   color: var(--dark-bg);
 }
 
-/* ==================== QUESTION CARD ==================== */
+/* QUESTION CARD */
 .study-shell {
   width: min(720px, calc(100% - 24px));
   margin: 0 auto;
@@ -868,7 +1099,7 @@ button:focus-visible, input:focus-visible {
 }
 
 .option-button:hover:not(:disabled) {
-  border-color: var(--primary-border);
+  border-color: var(--primary);
   background: var(--primary-soft);
 }
 
@@ -958,7 +1189,7 @@ button:focus-visible, input:focus-visible {
   color: var(--error-text);
 }
 
-/* STICKY BOTTOM ACTION BAR (MOBILE THUMB ACCESS) */
+/* STICKY BOTTOM ACTION BAR */
 .sticky-bottom-actions {
   position: fixed;
   bottom: 62px;
@@ -979,7 +1210,7 @@ button:focus-visible, input:focus-visible {
   font-size: 15px;
 }
 
-/* ==================== EXAM TIMER & RESULT ==================== */
+/* EXAM TIMER & RESULT */
 .timer {
   display: flex;
   align-items: center;

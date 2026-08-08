@@ -61,28 +61,86 @@ function formatDate(value: string | null | undefined) {
   }).format(new Date(value))
 }
 
+import { COURSE_CATEGORIES, type CourseCategory } from './config/categories'
+
 function Header({
   view,
   auth,
+  currentCategory,
+  onSelectCategory,
   onNavigate,
   onOpenAuth,
   onSignOut,
 }: {
   view: View
   auth: AuthState
+  currentCategory: CourseCategory
+  onSelectCategory: (cat: CourseCategory) => void
   onNavigate: (view: View) => void
   onOpenAuth: () => void
   onSignOut: () => void
 }) {
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   return (
     <header className="topbar">
-      <button className="brand" onClick={() => onNavigate('home')} aria-label="Về trang tổng quan">
-        <span className="brand-mark">150</span>
-        <div>
-          <strong>Ôn Thi Xe Máy A1</strong>
-          <small>150 Câu Hỏi Lý Thuyết</small>
+      <div className="topbar-left">
+        <button className="brand" onClick={() => onNavigate('home')} aria-label="Về trang tổng quan">
+          <span className="brand-mark">K602</span>
+          <div>
+            <strong>Ôn Thi GPLX Quốc Gia</strong>
+            <small>Hệ Thống Luyện Thi Lý Thuyết</small>
+          </div>
+        </button>
+
+        <div className="category-dropdown-container" ref={menuRef}>
+          <button
+            className="category-selector-btn"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            aria-expanded={dropdownOpen}
+          >
+            <span className="cat-badge">{currentCategory.badge}</span>
+            <span className="cat-name">{currentCategory.shortName}</span>
+            <span className="cat-arrow">▾</span>
+          </button>
+
+          {dropdownOpen && (
+            <div className="category-dropdown-menu">
+              <div className="dropdown-title">Danh mục khóa học & Bộ đề</div>
+              {COURSE_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  className={`dropdown-item ${cat.id === currentCategory.id ? 'active' : ''}`}
+                  onClick={() => {
+                    onSelectCategory(cat)
+                    setDropdownOpen(false)
+                  }}
+                >
+                  <div className="dropdown-item-main">
+                    <strong>{cat.name}</strong>
+                    <small>{cat.description}</small>
+                  </div>
+                  <span className={`status-pill ${cat.active ? 'active' : 'coming'}`}>
+                    {cat.questionCountText}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </button>
+      </div>
+
       <nav aria-label="Điều hướng chính">
         <button className={view === 'home' ? 'active' : ''} onClick={() => onNavigate('home')}>
           Tổng quan
@@ -168,12 +226,16 @@ function ProgressRing({ score }: { score: number }) {
 
 function Home({
   state,
+  currentCategory,
+  onSelectCategory,
   examPanelRef,
   onStart,
   onStartChapter,
   onStartExam,
 }: {
   state: LocalState
+  currentCategory: CourseCategory
+  onSelectCategory: (cat: CourseCategory) => void
   examPanelRef: React.RefObject<HTMLDivElement | null>
   onStart: (mode: Exclude<StudyMode, 'exam'>) => void
   onStartChapter: (chapter: string) => void
@@ -209,6 +271,20 @@ function Home({
 
   return (
     <main className="page-shell">
+      {/* BAR CHỌN NHANH DANH MỤC KHÓA HỌC & BỘ ĐỀ */}
+      <div className="category-tabs-bar" aria-label="Danh mục khóa học">
+        {COURSE_CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            className={`category-tab-chip ${cat.id === currentCategory.id ? 'active' : ''}`}
+            onClick={() => onSelectCategory(cat)}
+          >
+            <span>{cat.name}</span>
+            <small>{cat.badge}</small>
+          </button>
+        ))}
+      </div>
+
       <section className="hero-grid">
         <div className="hero-card">
           <div>
@@ -847,6 +923,18 @@ export default function App() {
     setView('study')
   }
 
+  const [currentCategory, setCurrentCategory] = useState<CourseCategory>(COURSE_CATEGORIES[0])
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  const handleSelectCategory = (cat: CourseCategory) => {
+    if (cat.active) {
+      setCurrentCategory(cat)
+    } else {
+      setToastMessage(`Dữ liệu "${cat.name}" (${cat.badge}) đang được biên soạn và sẽ sớm mở!`)
+      setTimeout(() => setToastMessage(null), 4500)
+    }
+  }
+
   const handleStartExam = (questionCount: number, durationMinutes: number) => {
     setExamProfile({
       name: `Thi thử ${questionCount} câu`,
@@ -886,14 +974,22 @@ export default function App() {
   }
 
   if (!loaded) {
-    return <div className="app-loading"><span className="brand-mark">150</span><p>Đang chuẩn bị phiên học…</p></div>
+    return <div className="app-loading"><span className="brand-mark">K602</span><p>Đang chuẩn bị phiên học…</p></div>
   }
 
   return (
     <div className="app">
+      {toastMessage && (
+        <div className="toast-notification">
+          <span>💡 {toastMessage}</span>
+          <button onClick={() => setToastMessage(null)}>×</button>
+        </div>
+      )}
       <Header
         view={view}
         auth={auth}
+        currentCategory={currentCategory}
+        onSelectCategory={handleSelectCategory}
         onNavigate={setView}
         onOpenAuth={() => setAuthOpen(true)}
         onSignOut={handleSignOut}
@@ -901,6 +997,8 @@ export default function App() {
       {view === 'home' && (
         <Home
           state={state}
+          currentCategory={currentCategory}
+          onSelectCategory={handleSelectCategory}
           examPanelRef={examPanelRef}
           onStart={startStudy}
           onStartChapter={startChapterStudy}
