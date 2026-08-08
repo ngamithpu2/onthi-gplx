@@ -901,6 +901,15 @@ export default function App() {
     }))
   }
 
+  const handleSelectModule = async (mod: PortalModule) => {
+    if (mod.id === currentModule.id) return
+    saveLocalState(state, currentModule.id).catch(() => undefined)
+    const newLocal = await loadLocalState(mod.id).catch(() => INITIAL_STATE)
+    setState(newLocal)
+    setCurrentModule(mod)
+    setView('home')
+  }
+
   if (!loaded) {
     return <div className="app-loading"><span className="brand-mark">K602</span><p>Đang chuẩn bị phiên học…</p></div>
   }
@@ -911,7 +920,7 @@ export default function App() {
         view={view}
         auth={auth}
         currentModule={currentModule}
-        onSelectModule={setCurrentModule}
+        onSelectModule={handleSelectModule}
         onNavigate={setView}
         onSignOut={handleSignOut}
       />
