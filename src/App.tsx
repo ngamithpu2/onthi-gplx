@@ -79,10 +79,10 @@ function Header({
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <button className="brand" onClick={() => onNavigate('home')} aria-label="Về trang chủ K602">
+        <button className="brand" onClick={() => onNavigate('home')} aria-label="Về trang chủ K602 Portal">
           <span className="brand-mark">K602</span>
           <div>
-            <strong>K602 Portal</strong>
+            <strong>Portal</strong>
           </div>
         </button>
 
