@@ -283,27 +283,42 @@ function Home({
           <div className="chapter-list">
             {chapters.map((chapter) => {
               const chapterQuestions = questions.filter((question) => question.chapter === chapter)
+              const seenCount = chapterQuestions.filter(
+                (question) => (state.progress[question.id]?.seen ?? 0) > 0,
+              ).length
               const mastered = chapterQuestions.filter(
                 (question) => (state.progress[question.id]?.mastery ?? 0) >= 3,
               ).length
-              const percent = Math.round((mastered / chapterQuestions.length) * 100)
+              const percentLearned = Math.round((seenCount / chapterQuestions.length) * 100)
+              const isComplete = percentLearned === 100
+
+              const fillBg = isComplete
+                ? 'linear-gradient(90deg, rgba(6, 182, 212, 0.14) 0%, rgba(37, 99, 235, 0.14) 100%)'
+                : percentLearned > 0
+                ? `linear-gradient(90deg, rgba(37, 99, 235, 0.12) 0%, rgba(6, 182, 212, 0.12) ${percentLearned}%, rgba(248, 250, 252, 1) ${percentLearned}%)`
+                : '#ffffff'
+
               return (
                 <button
                   type="button"
-                  className="chapter-row"
+                  className={`chapter-row ${isComplete ? 'complete' : ''} ${percentLearned > 0 ? 'started' : ''}`}
+                  style={{ background: fillBg }}
                   key={chapter}
                   onClick={() => onStartChapter(chapter)}
-                  aria-label={`Luyện nhóm ${chapter}, ${mastered} trên ${chapterQuestions.length} câu đã vững`}
+                  aria-label={`Luyện nhóm ${chapter}, đã học ${percentLearned}% (${seenCount} trên ${chapterQuestions.length} câu)`}
                 >
                   <div className="chapter-row-header">
                     <strong>{chapter}</strong>
-                    <span className="chapter-percent">{percent}%</span>
+                    <span className={`chapter-percent ${isComplete ? 'complete' : percentLearned > 0 ? 'active' : ''}`}>
+                      {percentLearned}% đã học
+                    </span>
                   </div>
                   <div className="bar">
-                    <i style={{ width: `${percent}%` }} />
+                    <i className={isComplete ? 'complete-bar' : ''} style={{ width: `${percentLearned}%` }} />
                   </div>
-                  <div>
-                    <span>{mastered}/{chapterQuestions.length} câu đã vững</span>
+                  <div className="chapter-row-footer">
+                    <span>Đã học: <b>{seenCount}/{chapterQuestions.length} câu</b></span>
+                    <span>Đã vững: <b>{mastered}/{chapterQuestions.length} câu</b></span>
                   </div>
                 </button>
               )
