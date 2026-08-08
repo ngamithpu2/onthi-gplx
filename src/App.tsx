@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { gplxA1Questions } from './modules/gplx-a1'
 import { hlDieuLenhQuestions } from './modules/huan-luyen-dieu-lenh'
 import { PORTAL_MODULES, type PortalModule } from './config/modules'
