@@ -80,7 +80,6 @@ function Header({
     <header className="topbar">
       <div className="topbar-left">
         <button className="brand" onClick={() => onNavigate('home')} aria-label="Về trang chủ K602 Portal">
-          <span className="brand-mark">K602</span>
           <strong className="brand-title">K602 Portal</strong>
         </button>
 
