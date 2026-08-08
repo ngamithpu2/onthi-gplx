@@ -228,11 +228,6 @@ function Home({
             <h1>{currentModule.name}</h1>
             <p>{currentModule.description}</p>
           </div>
-          <div className="hero-meta">
-            <div className="hero-meta-chip"><span>Câu đến hạn ôn</span><b>{dueCount} câu</b></div>
-            <div className="hero-meta-chip"><span>Câu cần củng cố</span><b>{weakCount} câu</b></div>
-            <div className="hero-meta-chip"><span>Câu trọng yếu đã vững</span><b>{readiness.criticalMastered}/{readiness.criticalTotal} câu</b></div>
-          </div>
         </div>
 
         <div className="readiness-card">
