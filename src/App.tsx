@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import questionsJson from './data/questions.json'
+import { gplxA1Questions as questions } from './modules/gplx-a1'
 import {
   buildExam,
   buildTodayQueue,
@@ -32,9 +32,7 @@ import type {
   StudyMode,
 } from './types'
 
-const questions = questionsJson as Question[]
 const LETTERS = ['A', 'B', 'C', 'D']
-
 type View = 'home' | 'study' | 'exam' | 'admin'
 
 function mergeProgress(
