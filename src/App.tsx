@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
-import { gplxA1Questions as questions } from './modules/gplx-a1'
+import { gplxA1Questions } from './modules/gplx-a1'
+import { hlDieuLenhQuestions } from './modules/huan-luyen-dieu-lenh'
+import { PORTAL_MODULES, type PortalModule } from './config/modules'
 import {
   buildExam,
   buildTodayQueue,
@@ -62,23 +63,42 @@ function formatDate(value: string | null | undefined) {
 function Header({
   view,
   auth,
+  currentModule,
+  onSelectModule,
   onNavigate,
   onSignOut,
 }: {
   view: View
   auth: AuthState
+  currentModule: PortalModule
+  onSelectModule: (mod: PortalModule) => void
   onNavigate: (view: View) => void
   onSignOut: () => void
 }) {
   return (
     <header className="topbar">
-      <button className="brand" onClick={() => onNavigate('home')} aria-label="Về trang chủ K602">
-        <span className="brand-mark">K602</span>
-        <div>
-          <strong>Ôn Thi GPLX Xe Máy A1</strong>
-          <small>Hệ Thống Sát Hạch Lý Thuyết 150 Câu</small>
+      <div className="topbar-left">
+        <button className="brand" onClick={() => onNavigate('home')} aria-label="Về trang chủ K602">
+          <span className="brand-mark">K602</span>
+          <div>
+            <strong>K602 Portal</strong>
+            <small>{currentModule.title}</small>
+          </div>
+        </button>
+
+        <div className="header-module-tabs" aria-label="Danh mục bộ đề">
+          {PORTAL_MODULES.map((mod) => (
+            <button
+              key={mod.id}
+              className={`module-tab-btn ${mod.id === currentModule.id ? 'active' : ''}`}
+              onClick={() => onSelectModule(mod)}
+            >
+              <span>{mod.shortTitle}</span>
+              <small>{mod.badge}</small>
+            </button>
+          ))}
         </div>
-      </button>
+      </div>
 
       <div className="account-area">
         {auth.role === 'admin' && (
@@ -155,12 +175,16 @@ function ProgressRing({ score }: { score: number }) {
 }
 
 function Home({
+  questions,
+  currentModule,
   state,
   examPanelRef,
   onStart,
   onStartChapter,
   onStartExam,
 }: {
+  questions: Question[]
+  currentModule: PortalModule
   state: LocalState
   examPanelRef: React.RefObject<HTMLDivElement | null>
   onStart: (mode: Exclude<StudyMode, 'exam'>) => void
@@ -178,11 +202,11 @@ function Home({
   }).length
   const chapters = [...new Set(questions.map((question) => question.chapter))]
 
-  const [selectedCount, setSelectedCount] = useState(30)
+  const [selectedCount, setSelectedCount] = useState(Math.min(30, questions.length))
   const [customInput, setCustomInput] = useState('')
 
-  const presets = [15, 20, 25, 30, 50, 150]
-  const currentCount = customInput ? Math.min(150, Math.max(5, Number(customInput) || 30)) : selectedCount
+  const presets = [10, 15, 20, 25, 30, questions.length]
+  const currentCount = customInput ? Math.min(questions.length, Math.max(5, Number(customInput) || 20)) : selectedCount
   const estimatedDuration = calculateExamDuration(currentCount)
 
   const handlePresetSelect = (count: number) => {
@@ -200,9 +224,9 @@ function Home({
       <section className="hero-grid">
         <div className="hero-card">
           <div>
-            <div className="eyebrow">Hệ thống học tập</div>
-            <h1>Học lý thuyết lái xe A1 khoa học</h1>
-            <p>Ứng dụng phương pháp ghi nhớ ngắt quãng giúp tối ưu thời gian ôn tập và đạt hiệu quả cao.</p>
+            <div className="eyebrow">{currentModule.shortTitle}</div>
+            <h1>{currentModule.name}</h1>
+            <p>{currentModule.description}</p>
           </div>
           <div className="hero-meta">
             <div className="hero-meta-chip"><span>Câu đến hạn ôn</span><b>{dueCount} câu</b></div>
@@ -225,7 +249,7 @@ function Home({
         <section className="quick-grid" aria-label="Các chế độ luyện tập">
           <button className="quick-card" onClick={() => onStart('all')}>
             <div>
-              <strong>Học toàn bộ 150 câu</strong>
+              <strong>Học toàn bộ {questions.length} câu</strong>
               <small>Ôn tập lần lượt toàn bộ bộ đề</small>
             </div>
             <span className="arrow-text">Vào học</span>
@@ -240,7 +264,7 @@ function Home({
           <button className="quick-card" onClick={() => onStart('critical')}>
             <div>
               <strong>Câu trọng yếu (Điểm liệt)</strong>
-              <small>{readiness.criticalMastered}/6 câu đã vững kiến thức</small>
+              <small>{readiness.criticalMastered}/{readiness.criticalTotal} câu đã vững kiến thức</small>
             </div>
             <span className="arrow-text">Vào học</span>
           </button>
@@ -251,9 +275,9 @@ function Home({
         <article className="panel">
           <div className="panel-heading">
             <div>
-              <h2>Sáu nhóm kiến thức</h2>
+              <h2>Các nhóm kiến thức</h2>
             </div>
-            <span>{readiness.seen}/150 câu</span>
+            <span>{readiness.seen}/{questions.length} câu</span>
           </div>
           <div className="chapter-list">
             {chapters.map((chapter) => {
@@ -762,6 +786,9 @@ function Admin() {
 }
 
 export default function App() {
+  const [currentModule, setCurrentModule] = useState<PortalModule>(PORTAL_MODULES[0])
+  const questions = currentModule.id === 'huan-luyen-dieu-lenh' ? hlDieuLenhQuestions : gplxA1Questions
+
   const [state, setState] = useState<LocalState>(INITIAL_STATE)
   const [loaded, setLoaded] = useState(false)
   const [view, setView] = useState<View>('home')
@@ -773,7 +800,8 @@ export default function App() {
   const examPanelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    Promise.all([loadLocalState(), getAuthState()]).then(([local, authState]) => {
+    setLoaded(false)
+    Promise.all([loadLocalState(currentModule.id), getAuthState()]).then(([local, authState]) => {
       setState(local)
       setAuth(authState)
       setLoaded(true)
@@ -788,12 +816,12 @@ export default function App() {
         }).catch(() => undefined)
       }
     })
-  }, [])
+  }, [currentModule.id])
 
   useEffect(() => {
     if (!loaded) return
-    saveLocalState(state).catch(() => undefined)
-  }, [loaded, state])
+    saveLocalState(state, currentModule.id).catch(() => undefined)
+  }, [loaded, state, currentModule.id])
 
   useEffect(() => {
     if (!auth.user) return
@@ -819,9 +847,9 @@ export default function App() {
     }
     const titles: Record<Exclude<StudyMode, 'exam'>, string> = {
       today: 'Kế hoạch ôn tập',
-      all: 'Toàn bộ 150 câu',
+      all: `Toàn bộ ${questions.length} câu`,
       weak: 'Củng cố câu yếu',
-      critical: '6 câu trọng yếu (Điểm liệt)',
+      critical: 'Câu trọng yếu (Điểm liệt)',
     }
     setStudyTitle(titles[mode])
     setView('study')
@@ -882,11 +910,15 @@ export default function App() {
       <Header
         view={view}
         auth={auth}
+        currentModule={currentModule}
+        onSelectModule={setCurrentModule}
         onNavigate={setView}
         onSignOut={handleSignOut}
       />
       {view === 'home' && (
         <Home
+          questions={questions}
+          currentModule={currentModule}
           state={state}
           examPanelRef={examPanelRef}
           onStart={startStudy}

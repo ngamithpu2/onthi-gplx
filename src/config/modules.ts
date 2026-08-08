@@ -5,48 +5,29 @@ export interface PortalModule {
   badge: string
   active: boolean
   description: string
-  link?: string
+  questionCount: number
+  criticalCount: number
 }
 
 export const PORTAL_MODULES: PortalModule[] = [
   {
-    id: 'gplx',
-    title: 'Ôn Thi GPLX Quốc Gia',
-    shortTitle: 'Ôn thi GPLX',
-    badge: 'Hoạt động',
+    id: 'gplx-a1',
+    title: 'Ôn Thi GPLX Xe Máy (Hạng A1)',
+    shortTitle: 'GPLX Xe Máy A1',
+    badge: '150 câu',
     active: true,
-    description: 'Hệ thống luyện thi lý thuyết GPLX sát hạch chuẩn',
+    description: 'Bộ 150 câu hỏi lý thuyết sát hạch lái xe máy hạng A1 chuẩn GTVT',
+    questionCount: 150,
+    criticalCount: 6,
   },
   {
-    id: 'education',
-    title: 'Học Tập & Giáo Dục',
-    shortTitle: 'Học tập & Giáo dục',
-    badge: 'Mở rộng',
-    active: false,
-    description: 'Tổng hợp tài liệu, khóa học và tri thức giáo dục',
-  },
-  {
-    id: 'tech',
-    title: 'Công Nghệ & Kỹ Năng',
-    shortTitle: 'Công nghệ',
-    badge: 'Mở rộng',
-    active: false,
-    description: 'Kỹ năng công nghệ, phần mềm và thủ thuật máy tính',
-  },
-  {
-    id: 'tools',
-    title: 'Công Cụ & Tiện Ích',
-    shortTitle: 'Tiện ích',
-    badge: 'Mở rộng',
-    active: false,
-    description: 'Các công cụ tính toán, tra cứu và tiện ích trực tuyến',
-  },
-  {
-    id: 'news',
-    title: 'Tin Tức & Bài Viết',
-    shortTitle: 'Tin tức & Chia sẻ',
-    badge: 'Mở rộng',
-    active: false,
-    description: 'Tổng hợp thông tin, kiến thức đời sống và tin tức',
+    id: 'huan-luyen-dieu-lenh',
+    title: 'Huấn Luyện Điều Lệnh Quân Đội',
+    shortTitle: 'Điều Lệnh Quân Đội',
+    badge: '36 câu',
+    active: true,
+    description: 'Bộ câu hỏi trắc nghiệm kiểm tra lý thuyết Điều lệnh đội ngũ Quân đội nhân dân Việt Nam',
+    questionCount: 36,
+    criticalCount: 7,
   },
 ]
