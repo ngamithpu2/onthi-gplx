@@ -1,0 +1,27 @@
+{
+  "name": "on-thi-xe-may-150",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "validate:data": "node scripts/validate-data.mjs",
+    "extract:data": "node scripts/extract-data.mjs",
+    "test:load": "node scripts/smoke-load.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.1",
+    "idb-keyval": "^6.3.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.0"
+  }
+}
