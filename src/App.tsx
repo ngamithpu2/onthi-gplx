@@ -61,21 +61,21 @@ function formatDate(value: string | null | undefined) {
   }).format(new Date(value))
 }
 
-import { COURSE_CATEGORIES, type CourseCategory } from './config/categories'
+import { PORTAL_MODULES, type PortalModule } from './config/modules'
 
 function Header({
   view,
   auth,
-  currentCategory,
-  onSelectCategory,
+  currentModule,
+  onSelectModule,
   onNavigate,
   onOpenAuth,
   onSignOut,
 }: {
   view: View
   auth: AuthState
-  currentCategory: CourseCategory
-  onSelectCategory: (cat: CourseCategory) => void
+  currentModule: PortalModule
+  onSelectModule: (mod: PortalModule) => void
   onNavigate: (view: View) => void
   onOpenAuth: () => void
   onSignOut: () => void
@@ -96,11 +96,11 @@ function Header({
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <button className="brand" onClick={() => onNavigate('home')} aria-label="Về trang tổng quan">
+        <button className="brand" onClick={() => onNavigate('home')} aria-label="Về trang tổng quan K602">
           <span className="brand-mark">K602</span>
           <div>
-            <strong>Ôn Thi GPLX Quốc Gia</strong>
-            <small>Hệ Thống Luyện Thi Lý Thuyết</small>
+            <strong>K602 Portal</strong>
+            <small>Nền tảng Tri thức & Tiện ích</small>
           </div>
         </button>
 
@@ -110,29 +110,29 @@ function Header({
             onClick={() => setDropdownOpen(!dropdownOpen)}
             aria-expanded={dropdownOpen}
           >
-            <span className="cat-badge">{currentCategory.badge}</span>
-            <span className="cat-name">{currentCategory.shortName}</span>
+            <span className="cat-badge">{currentModule.badge}</span>
+            <span className="cat-name">{currentModule.shortTitle}</span>
             <span className="cat-arrow">▾</span>
           </button>
 
           {dropdownOpen && (
             <div className="category-dropdown-menu">
-              <div className="dropdown-title">Danh mục khóa học & Bộ đề</div>
-              {COURSE_CATEGORIES.map((cat) => (
+              <div className="dropdown-title">Danh mục Chuyên mục Portal</div>
+              {PORTAL_MODULES.map((mod) => (
                 <button
-                  key={cat.id}
-                  className={`dropdown-item ${cat.id === currentCategory.id ? 'active' : ''}`}
+                  key={mod.id}
+                  className={`dropdown-item ${mod.id === currentModule.id ? 'active' : ''}`}
                   onClick={() => {
-                    onSelectCategory(cat)
+                    onSelectModule(mod)
                     setDropdownOpen(false)
                   }}
                 >
                   <div className="dropdown-item-main">
-                    <strong>{cat.name}</strong>
-                    <small>{cat.description}</small>
+                    <strong>{mod.title}</strong>
+                    <small>{mod.description}</small>
                   </div>
-                  <span className={`status-pill ${cat.active ? 'active' : 'coming'}`}>
-                    {cat.questionCountText}
+                  <span className={`status-pill ${mod.active ? 'active' : 'coming'}`}>
+                    {mod.badge}
                   </span>
                 </button>
               ))}
@@ -226,16 +226,16 @@ function ProgressRing({ score }: { score: number }) {
 
 function Home({
   state,
-  currentCategory,
-  onSelectCategory,
+  currentModule,
+  onSelectModule,
   examPanelRef,
   onStart,
   onStartChapter,
   onStartExam,
 }: {
   state: LocalState
-  currentCategory: CourseCategory
-  onSelectCategory: (cat: CourseCategory) => void
+  currentModule: PortalModule
+  onSelectModule: (mod: PortalModule) => void
   examPanelRef: React.RefObject<HTMLDivElement | null>
   onStart: (mode: Exclude<StudyMode, 'exam'>) => void
   onStartChapter: (chapter: string) => void
@@ -271,16 +271,16 @@ function Home({
 
   return (
     <main className="page-shell">
-      {/* BAR CHỌN NHANH DANH MỤC KHÓA HỌC & BỘ ĐỀ */}
-      <div className="category-tabs-bar" aria-label="Danh mục khóa học">
-        {COURSE_CATEGORIES.map((cat) => (
+      {/* BAR CHỌN NHANH CÁC CHUYÊN MỤC PORTAL K602 */}
+      <div className="category-tabs-bar" aria-label="Chuyên mục Portal">
+        {PORTAL_MODULES.map((mod) => (
           <button
-            key={cat.id}
-            className={`category-tab-chip ${cat.id === currentCategory.id ? 'active' : ''}`}
-            onClick={() => onSelectCategory(cat)}
+            key={mod.id}
+            className={`category-tab-chip ${mod.id === currentModule.id ? 'active' : ''}`}
+            onClick={() => onSelectModule(mod)}
           >
-            <span>{cat.name}</span>
-            <small>{cat.badge}</small>
+            <span>{mod.shortTitle}</span>
+            <small>{mod.badge}</small>
           </button>
         ))}
       </div>
@@ -923,14 +923,14 @@ export default function App() {
     setView('study')
   }
 
-  const [currentCategory, setCurrentCategory] = useState<CourseCategory>(COURSE_CATEGORIES[0])
+  const [currentModule, setCurrentModule] = useState<PortalModule>(PORTAL_MODULES[0])
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
-  const handleSelectCategory = (cat: CourseCategory) => {
-    if (cat.active) {
-      setCurrentCategory(cat)
+  const handleSelectModule = (mod: PortalModule) => {
+    if (mod.active) {
+      setCurrentModule(mod)
     } else {
-      setToastMessage(`Dữ liệu "${cat.name}" (${cat.badge}) đang được biên soạn và sẽ sớm mở!`)
+      setToastMessage(`Chuyên mục "${mod.title}" đang sẵn sàng để bạn bổ sung nội dung sau!`)
       setTimeout(() => setToastMessage(null), 4500)
     }
   }
@@ -988,8 +988,8 @@ export default function App() {
       <Header
         view={view}
         auth={auth}
-        currentCategory={currentCategory}
-        onSelectCategory={handleSelectCategory}
+        currentModule={currentModule}
+        onSelectModule={handleSelectModule}
         onNavigate={setView}
         onOpenAuth={() => setAuthOpen(true)}
         onSignOut={handleSignOut}
@@ -997,8 +997,8 @@ export default function App() {
       {view === 'home' && (
         <Home
           state={state}
-          currentCategory={currentCategory}
-          onSelectCategory={handleSelectCategory}
+          currentModule={currentModule}
+          onSelectModule={handleSelectModule}
           examPanelRef={examPanelRef}
           onStart={startStudy}
           onStartChapter={startChapterStudy}
