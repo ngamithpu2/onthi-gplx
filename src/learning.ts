@@ -66,7 +66,7 @@ export function buildTodayQueue(
   const weak = questions
     .filter((question) => {
       const item = progress[question.id]
-      return item?.seen && (item.mastery < 3 || item.wrong > item.correct)
+      return item?.seen && (item.lastResult === 'wrong' || item.markedUnsure)
     })
     .sort((a, b) => (progress[a.id]?.mastery ?? 0) - (progress[b.id]?.mastery ?? 0))
   const unseen = seededSort(
@@ -100,7 +100,7 @@ export function selectModeQuestions(
   if (mode === 'weak') {
     return questions.filter((question) => {
       const item = progress[question.id]
-      return item?.seen && (item.mastery < 3 || item.lastResult === 'wrong')
+      return item?.seen && (item.lastResult === 'wrong' || item.markedUnsure)
     })
   }
   return questions

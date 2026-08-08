@@ -176,7 +176,7 @@ function Home({
   }).length
   const weakCount = questions.filter((question) => {
     const item = state.progress[question.id]
-    return item?.seen && (item.mastery < 3 || item.lastResult === 'wrong')
+    return Boolean(item?.seen && (item.lastResult === 'wrong' || item.markedUnsure))
   }).length
   const chapters = [...new Set(questions.map((question) => question.chapter))]
 
