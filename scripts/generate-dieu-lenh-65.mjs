@@ -1,0 +1,1023 @@
+import fs from 'fs'
+import path from 'path'
+
+const questions = [
+  // CHƯƠNG 1: BÁO CÁO GIÁM KHẢO (5 câu)
+  {
+    id: 1,
+    chapter: "Báo cáo Giám khảo",
+    question: "Khi nghe gọi tên quân nhân vào trước bàn giám khảo nhận phiếu câu hỏi, câu xưng báo chuẩn là gì?",
+    options: [
+      "\"Tôi, họ tên, chức vụ, đơn vị... Báo cáo đồng chí chủ khảo, Tôi có mặt nhận câu hỏi. HẾT\"",
+      "\"Báo cáo đồng chí giám khảo, tôi xin nhận câu hỏi thi. HẾT\"",
+      "\"Báo cáo chủ khảo, tôi đã sẵn sàng nhận đề kiểm tra. HẾT\"",
+      "\"Tôi xin phép nhận phiếu câu hỏi kiểm tra. HẾT\""
+    ],
+    answer: 0,
+    explanation: "Khi nghe gọi tên vào nhận phiếu câu hỏi, quân nhân chào báo cáo: 'Tôi, họ tên, chức vụ, đơn vị (phiên hiệu đơn vị mình và trên một cấp). Báo cáo đồng chí chủ khảo, Tôi có mặt nhận câu hỏi. HẾT'.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 2,
+    chapter: "Báo cáo Giám khảo",
+    question: "Khi giám khảo phát khẩu lệnh: \"Đồng chí đã thực hiện xong nội dung kiểm tra, về vị trí\", quân nhân cần trả lời như thế nào?",
+    options: [
+      "Trả lời \"RÕ\", thực hiện động tác chào, rồi về vị trí quy định.",
+      "Trả lời \"CẢM ƠN GIÁM KHẢO\" rồi về vị trí.",
+      "Thực hiện động tác chào, không cần trả lời, rồi về vị trí.",
+      "Trả lời \"BÁO CÁO XONG\" rồi quay sau về vị trí."
+    ],
+    answer: 0,
+    explanation: "Khi giám khảo công bố kết thúc kiểm tra và lệnh về vị trí, quân nhân trả lời 'RÕ', thực hiện động tác chào rồi về vị trí quy định.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 3,
+    chapter: "Báo cáo Giám khảo",
+    question: "Trong câu xưng báo khi nhận phiếu câu hỏi, quân nhân cần nêu phiên hiệu đơn vị ở cấp nào?",
+    options: [
+      "Phiên hiệu đơn vị mình và đơn vị trên một cấp",
+      "Chỉ nêu phiên hiệu tiểu đoàn hoặc đại đội",
+      "Chỉ nêu họ tên và cấp bậc",
+      "Nêu đầy đủ từ cấp trung đoàn trở lên"
+    ],
+    answer: 0,
+    explanation: "Khi xưng báo đơn vị, quân nhân báo cáo phiên hiệu đơn vị mình và trên một cấp.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 4,
+    chapter: "Báo cáo Giám khảo",
+    question: "Ví dụ xưng báo nào sau đây đúng chuẩn điều lệnh quy định?",
+    options: [
+      "\"Tôi Nguyễn Văn A Trợ lý Ban TMKH, Báo cáo đồng chí Chủ khảo tôi có mặt nhận câu hỏi. HẾT\"",
+      "\"Tôi Nguyễn Văn A xin báo cáo chủ khảo nhận phiếu câu hỏi. HẾT\"",
+      "\"Tôi hạ sĩ Nguyễn Văn A báo cáo nhận đề thi. HẾT\"",
+      "\"Tôi Nguyễn Văn A đại đội 1 báo cáo nhận phiếu câu hỏi.\""
+    ],
+    answer: 0,
+    explanation: "VD chuẩn: 'Tôi Nguyễn Văn A Trợ lý (Thủ kho, Nhân viên...) Ban TMKH, Báo cáo đồng chí Chủ khảo (phó chủ khảo) tôi có mặt nhận câu hỏi. HẾT'.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 5,
+    chapter: "Báo cáo Giám khảo",
+    question: "Trước khi thực hiện động tác báo cáo nhận phiếu câu hỏi trước bàn giám khảo, quân nhân phải thực hiện động tác gì?",
+    options: [
+      "Thực hiện động tác chào báo cáo giám khảo",
+      "Đứng nghiêm 5 giây không cần chào",
+      "Cúi đầu chào giám khảo",
+      "Bắt tay giám khảo trước"
+    ],
+    answer: 0,
+    explanation: "Khi vào trước bàn giám khảo, quân nhân thực hiện động tác chào báo cáo giám khảo.",
+    image: null,
+    critical: false
+  },
+
+  // CHƯƠNG 2: ĐỘNG TÁC ĐI ĐỀU, ĐỨNG LẠI, ĐỔI CHÂN (12 câu)
+  {
+    id: 6,
+    chapter: "Động tác Đi đều, Đứng lại, Đổi chân",
+    question: "Ý nghĩa của động tác Đi đều trong điều lệnh đội ngũ là gì?",
+    options: [
+      "Thực hiện khi di chuyển đội hình, di chuyển vị trí có trật tự biểu hiện sự thống nhất, hùng mạnh, trang nghiêm của quân đội",
+      "Thực hiện khi diễu binh, duyệt binh trước lễ đài",
+      "Thực hiện khi làm nhiệm vụ tiêu binh danh dự",
+      "Thực hiện khi chuyển hướng di chuyển trong hội trường"
+    ],
+    answer: 0,
+    explanation: "Ý nghĩa đi đều: Thực hiện khi di chuyển đội hình, di chuyển vị trí có trật tự biểu hiện sự thống nhất, hùng mạnh, trang nghiêm của quân đội.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 7,
+    chapter: "Động tác Đi đều, Đứng lại, Đổi chân",
+    question: "Khẩu lệnh \"Đi đều... BƯỚC\" bao gồm những phần nào?",
+    options: [
+      "\"Đi đều\" là dự lệnh, \"BƯỚC\" là động lệnh",
+      "\"Đi đều\" là động lệnh, \"BƯỚC\" là dự lệnh",
+      "Cả hai từ đều là động lệnh",
+      "Không có dự lệnh, chỉ có động lệnh"
+    ],
+    answer: 0,
+    explanation: "Khẩu lệnh 'Đi đều... BƯỚC' có 'Đi đều' là dự lệnh, 'BƯỚC' là động lệnh.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 8,
+    chapter: "Động tác Đi đều, Đứng lại, Đổi chân",
+    question: "Ở cử động 1 của động tác Đi đều, độ dài bước chân trái là bao nhiêu?",
+    options: [
+      "Cách chân phải 75 cm (tính từ gót nọ đến gót kia)",
+      "Cách chân phải 80 cm",
+      "Cách chân phải 60 cm",
+      "Cách chân phải 70 cm"
+    ],
+    answer: 0,
+    explanation: "Ở cử động 1 đi đều, chân trái bước lên cách chân phải 75 cm (tính từ gót nọ đến gót kia).",
+    image: null,
+    critical: false
+  },
+  {
+    id: 9,
+    chapter: "Động tác Đi đều, Đứng lại, Đổi chân",
+    question: "Ở cử động 1 của động tác Đi đều, cánh tay trên của tay phải tạo với thân người một góc bao nhiêu độ?",
+    options: [
+      "Góc 60 độ",
+      "Góc 80 độ",
+      "Góc 45 độ",
+      "Góc 90 độ"
+    ],
+    answer: 0,
+    explanation: "Tay phải đánh ra phía trước khuỷu tay gập và nâng lên, cánh tay trên tạo với thân người một góc 60 độ.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 10,
+    chapter: "Động tác Đi đều, Đứng lại, Đổi chân",
+    question: "Trong động tác Đi đều, cánh tay dưới của tay đánh ra phía trước cách thân người bao nhiêu cm?",
+    options: [
+      "Cách thân người 20 cm, có độ dừng, nắm tay úp xuống",
+      "Cách thân người 15 cm",
+      "Cách thân người 30 cm",
+      "Sát vào thân người"
+    ],
+    answer: 0,
+    explanation: "Cánh tay dưới thành đường thăng bằng song song mặt đất, cách thân người 20 cm, có độ dừng, nắm tay úp xuống.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 11,
+    chapter: "Động tác Đi đều, Đứng lại, Đổi chân",
+    question: "Trong động tác Đi đều, tay trái đánh về phía sau hợp với thân người một góc bao nhiêu độ?",
+    options: [
+      "Góc 45 độ, cánh tay thẳng, sát thân người, lòng bàn tay quay vào trong",
+      "Góc 60 độ",
+      "Góc 30 độ",
+      "Góc 90 độ"
+    ],
+    answer: 0,
+    explanation: "Tay trái đánh về phía sau cánh tay thẳng, sát thân người, hợp với thân người góc 45 độ, lòng bàn tay quay vào trong.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 12,
+    chapter: "Động tác Đi đều, Đứng lại, Đổi chân",
+    question: "Đối với Sĩ quan, QNCN nữ khi mặc áo quân phục thường dùng mùa hè, khớp xương thứ 3 ngón tay trỏ của tay đánh trước cao ngang vị trí nào?",
+    options: [
+      "Mép trên cánh tay dưới cao ngang với mép dưới cúc áo thứ 2 từ trên xuống",
+      "Cao ngang cúc áo thứ nhất",
+      "Cao ngang thắt lưng",
+      "Cao ngang mép túi áo ngực bên trái"
+    ],
+    answer: 0,
+    explanation: "Đối với nữ mặc quân phục hè: mép trên cánh tay dưới cao ngang mép dưới cúc áo thứ 2 từ trên xuống.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 13,
+    chapter: "Động tác Đi đều, Đứng lại, Đổi chân",
+    question: "Tốc độ của động tác Đi đều chuẩn trong điều lệnh là bao nhiêu bước trong 1 phút?",
+    options: [
+      "106 bước / phút",
+      "110 bước / phút",
+      "100 bước / phút",
+      "120 bước / phút"
+    ],
+    answer: 0,
+    explanation: "Tốc độ đi đều theo quy định điều lệnh là 106 bước trong 1 phút.",
+    image: null,
+    critical: true
+  },
+  {
+    id: 14,
+    chapter: "Động tác Đi đều, Đứng lại, Đổi chân",
+    question: "Trong động tác Đứng lại khi đang đi đều, người chỉ huy hô dự lệnh \"Đứng lại\" và động lệnh \"ĐỨNG\" rơi vào chân nào?",
+    options: [
+      "Đều rơi vào chân phải",
+      "Đều rơi vào chân trái",
+      "Dự lệnh rơi chân trái, động lệnh rơi chân phải",
+      "Dự lệnh rơi chân phải, động lệnh rơi chân trái"
+    ],
+    answer: 0,
+    explanation: "Trong động tác Đứng lại khi đi đều, người chỉ huy hô dự lệnh 'Đứng lại' và động lệnh 'ĐỨNG' đều rơi vào chân phải.",
+    image: null,
+    critical: true
+  },
+  {
+    id: 15,
+    chapter: "Động tác Đi đều, Đứng lại, Đổi chân",
+    question: "Khi thực hiện cử động 1 của động tác Đứng lại (sau động lệnh ĐỨNG), bàn chân trái đặt như thế nào?",
+    options: [
+      "Chân trái bước lên 1 bước, bàn chân đặt chếch sang trái 22,5 độ",
+      "Chân trái bước lên 1 bước thẳng về trước",
+      "Chân trái bước sang ngang 30 cm",
+      "Chân trái thu về sát chân phải"
+    ],
+    answer: 0,
+    explanation: "Cử động 1 đứng lại: Chân trái bước lên 1 bước (bàn chân đặt chếch sang trái 22,5 độ).",
+    image: null,
+    critical: false
+  },
+  {
+    id: 16,
+    chapter: "Động tác Đi đều, Đứng lại, Đổi chân",
+    question: "Trong động tác đổi chân khi đi, tiếng hô \"Một\" và \"Hai\" của người chỉ huy rơi vào lúc nào?",
+    options: [
+      "\"Một\" rơi vào lúc bàn chân trái vừa chạm đất, \"Hai\" rơi vào lúc bàn chân phải vừa chạm đất",
+      "\"Một\" rơi chân phải, \"Hai\" rơi chân trái",
+      "Hô liên tiếp khi vừa bước chân trái",
+      "Hô bất kỳ không phụ thuộc bước chân"
+    ],
+    answer: 0,
+    explanation: "Tiếng hô 'Một' rơi vào lúc bàn chân trái vừa chạm đất, 'Hai' rơi vào lúc bàn chân phải vừa chạm đất.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 17,
+    chapter: "Động tác Đi đều, Đứng lại, Đổi chân",
+    question: "Động tác Đổi chân trong khi đi được thực hiện qua mấy cử động?",
+    options: [
+      "3 cử động",
+      "2 cử động",
+      "4 cử động",
+      "1 cử động liên tục"
+    ],
+    answer: 0,
+    explanation: "Động tác đổi chân trong khi đi gồm có 3 cử động.",
+    image: null,
+    critical: false
+  },
+
+  // CHƯƠNG 3: ĐỘNG TÁC CHÀO TẠI CHỖ, THÔI CHÀO (12 câu)
+  {
+    id: 18,
+    chapter: "Động tác Chào tại chỗ, Thôi chào",
+    question: "Ý nghĩa của động tác Chào trong điều lệnh quân đội là gì?",
+    options: [
+      "Biểu thị kỷ luật quân đội, thể hiện tinh thần đoàn kết, nếp sống văn minh, thống nhất hành động, biểu thị tư thế tác phong quân nhân",
+      "Để thể hiện sự chào hỏi thông thường giữa các quân nhân",
+      "Để báo cáo số lượng quân số trước chỉ huy",
+      "Để bắt đầu các buổi tập luyện thể lực"
+    ],
+    answer: 0,
+    explanation: "Ý nghĩa động tác chào: Để biểu thị kỷ luật quân đội, thể hiện tinh thần đoàn kết, nếp sống văn minh, thống nhất hành động, biểu thị tư thế tác phong quân nhân.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 19,
+    chapter: "Động tác Chào tại chỗ, Thôi chào",
+    question: "Khi đội mũ Kê-pi thực hiện động tác chào, đầu ngón tay nào của tay phải chạm vào vành lưỡi trai?",
+    options: [
+      "Đầu ngón tay giữa",
+      "Đầu ngón tay trỏ",
+      "Đầu ngón tay cái",
+      "Cả ngón trỏ và ngón giữa"
+    ],
+    answer: 0,
+    explanation: "Khi chào đội mũ Kê-pi: tay phải đưa lên đặt đầu ngón tay giữa chạm vào bên phải vành lưỡi trai.",
+    image: null,
+    critical: true
+  },
+  {
+    id: 20,
+    chapter: "Động tác Chào tại chỗ, Thôi chào",
+    question: "Khi đưa tay chào, 5 ngón tay của bàn tay phải đặt như thế nào?",
+    options: [
+      "5 ngón tay khép lại và duỗi thẳng, lòng bàn tay úp xuống và hơi chếch về trước",
+      "5 ngón tay xòe tự nhiên, lòng bàn tay ngửa",
+      "5 ngón tay nắm nhẹ lại",
+      "Ngón cái gập vào trong, 4 ngón còn lại duỗi thẳng"
+    ],
+    answer: 0,
+    explanation: "Khi chào: 5 ngón tay khép lại và duỗi thẳng, lòng bàn tay úp xuống và hơi chếch về trước.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 21,
+    chapter: "Động tác Chào tại chỗ, Thôi chào",
+    question: "Khi chào, vị trí cánh tay trên nâng lên ở tư thế nào so với thân người?",
+    options: [
+      "Cánh tay trên nâng lên và ngang với thân người",
+      "Cánh tay trên ép sát vào ngực",
+      "Cánh tay trên tạo với thân người góc 45 độ",
+      "Cánh tay trên giơ cao quá vai"
+    ],
+    answer: 0,
+    explanation: "Cánh tay trên nâng lên và ngang với thân người, cánh tay dưới thành đường thẳng.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 22,
+    chapter: "Động tác Chào tại chỗ, Thôi chào",
+    question: "Khi dứt động lệnh \"THÔI\" (thôi chào), tay phải đưa xuống như thế nào?",
+    options: [
+      "Đưa xuống theo đường gần nhất về tư thế đứng nghiêm",
+      "Vung mạnh sang ngang rồi thu về",
+      "Đưa qua trước ngực rồi mới hạ xuống",
+      "Hạ từ từ trong 3 giây"
+    ],
+    answer: 0,
+    explanation: "Khi nghe dứt động lệnh 'THÔI', tay phải đưa xuống theo đường gần nhất về tư thế đứng nghiêm.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 23,
+    chapter: "Động tác Chào tại chỗ, Thôi chào",
+    question: "Khi thực hiện động tác \"Nhìn bên phải (trái) chào\", mặt quân nhân đánh lên bao nhiêu độ và quay sang bên chào bao nhiêu độ?",
+    options: [
+      "Đánh mặt lên 15 độ, quay mặt sang bên chào 45 độ",
+      "Đánh mặt lên 20 độ, quay mặt sang bên chào 90 độ",
+      "Đánh mặt lên 10 độ, quay mặt sang bên chào 30 độ",
+      "Giữ mặt thẳng, chỉ quay mắt nhìn sang bên"
+    ],
+    answer: 0,
+    explanation: "Khi nhìn bên phải (trái) chào: tay phải đưa lên chào đồng thời đánh mặt lên 15 độ và quay mặt sang bên phải (trái) 45 độ.",
+    image: null,
+    critical: true
+  },
+  {
+    id: 24,
+    chapter: "Động tác Chào tại chỗ, Thôi chào",
+    question: "Khi thay đổi hướng chào từ 45 độ bên phải (trái), mắt nhìn theo người mình chào đến đâu thì dừng lại?",
+    options: [
+      "Đến chính giữa phía trước mặt dừng lại, tay không đưa theo vành mũ",
+      "Quay tiếp sang bên đối diện 45 độ",
+      "Dừng lại ngay khi người được chào vừa đi qua",
+      "Cúi mặt xuống đất rồi quay về"
+    ],
+    answer: 0,
+    explanation: "Khi thay đổi hướng chào: nhìn theo người mình chào đến chính giữa phía trước mặt dừng lại, tay không đưa theo vành mũ.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 25,
+    chapter: "Động tác Chào tại chỗ, Thôi chào",
+    question: "Khi luyện tập cơ bản dùng khẩu lệnh \"CHÀO\", \"THÔI\" thì đặc điểm khẩu lệnh là gì?",
+    options: [
+      "Chỉ có động lệnh, không có dự lệnh",
+      "Có cả dự lệnh và động lệnh",
+      "Chỉ có dự lệnh",
+      "Khẩu lệnh hô kéo dài 5 giây"
+    ],
+    answer: 0,
+    explanation: "Khi luyện tập cơ bản dùng khẩu lệnh 'CHÀO', 'THÔI' chỉ có động lệnh, không có dự lệnh.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 26,
+    chapter: "Động tác Chào tại chỗ, Thôi chào",
+    question: "Điểm nào sau đây là SAI khi thực hiện động tác chào?",
+    options: [
+      "Nghiêng đầu, cười đùa, hút thuốc hoặc nhìn đi nơi khác",
+      "Tay đưa chào theo đường gần nhất",
+      "5 ngón tay khép sát nhau",
+      "Mắt nhìn thẳng vào người mình chào"
+    ],
+    answer: 0,
+    explanation: "Khi chào cấm nghiêng đầu, cười đùa, hút thuốc, liếc mắt hoặc nhìn đi nơi khác. Người phải ngay ngắn, nghiêm túc.",
+    critical: false
+  },
+  {
+    id: 27,
+    chapter: "Động tác Chào tại chỗ, Thôi chào",
+    question: "Khi chào không được ngửa lòng bàn tay quá mức, điều này thể hiện chú ý nào trong điều lệnh?",
+    options: [
+      "Bàn tay và cánh tay dưới thành một đường thẳng, lòng bàn tay không ngửa quá",
+      "Bàn tay phải vuông góc với cánh tay dưới",
+      "Lòng bàn tay úp hoàn toàn xuống đất",
+      "Nắm tay lại nhẹ nhàng"
+    ],
+    answer: 0,
+    explanation: "Bàn tay và cánh tay dưới phải thành một đường thẳng, lòng bàn tay úp xuống và hơi chếch về trước, không ngửa quá.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 28,
+    chapter: "Động tác Chào tại chỗ, Thôi chào",
+    question: "Khi mang găng tay thì động tác chào được thực hiện như thế nào?",
+    options: [
+      "Vẫn chào bình thường, khi bắt tay mới phải bỏ găng tay",
+      "Phải tháo găng tay ra trước khi chào",
+      "Chỉ đưa tay lên ngang ngực",
+      "Không thực hiện động tác chào"
+    ],
+    answer: 0,
+    explanation: "Khi mang găng tay vẫn chào bình thường (khi bắt tay mới phải bỏ găng tay).",
+    image: null,
+    critical: false
+  },
+  {
+    id: 29,
+    chapter: "Động tác Chào tại chỗ, Thôi chào",
+    question: "Động tác đưa tay lên chào và bỏ tay xuống có yêu cầu gì về tác phong?",
+    options: [
+      "Nhanh, mạnh, dứt khoát và chuẩn xác",
+      "Từ từ nhẹ nhàng",
+      "Làm theo nhịp hô 1, 2, 3",
+      "Tự do không gò bó"
+    ],
+    answer: 0,
+    explanation: "Động tác đưa tay lên, bỏ tay xuống phải nhanh mạnh, dứt khoát và chuẩn xác.",
+    image: null,
+    critical: false
+  },
+
+  // CHƯƠNG 4: ĐỘNG TÁC ĐI NGHIÊM, ĐỨNG LẠI (10 câu)
+  {
+    id: 30,
+    chapter: "Động tác Đi nghiêm, Đứng lại",
+    question: "Ý nghĩa của động tác Đi nghiêm là gì?",
+    options: [
+      "Thực hiện khi duyệt đội ngũ, duyệt binh, diễu binh, khi làm nhiệm vụ tiêu binh danh dự, biểu thị phong cách quân nhân hùng mạnh, trang nghiêm",
+      "Thực hiện khi chuyển di chuyển trong sinh hoạt hằng ngày",
+      "Thực hiện khi hành quân đường dài",
+      "Thực hiện khi đi trong khuôn viên doanh trại"
+    ],
+    answer: 0,
+    explanation: "Đi nghiêm thực hiện khi duyệt đội ngũ, duyệt binh, diễu binh, tiêu binh danh dự, thể hiện sự trang nghiêm chính quy của quân đội.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 31,
+    chapter: "Động tác Đi nghiêm, Đứng lại",
+    question: "Ở cử động 1 của động tác Đi nghiêm, chân trái nâng lên cách mặt đất bao nhiêu cm trước khi đặt xuống?",
+    options: [
+      "Cách mặt đất 30 cm rồi đặt mạnh cả bàn chân xuống đất",
+      "Cách mặt đất 20 cm rồi đặt gót chân xuống",
+      "Cách mặt đất 40 cm rồi đặt nhẹ mũi chân",
+      "Cách mặt đất 15 cm"
+    ],
+    answer: 0,
+    explanation: "Cử động 1 đi nghiêm: Chân trái bước lên 1 bước đầu gối thẳng, bàn chân thẳng hướng tiến song song mặt đất cách mặt đất 30cm rồi đặt mạnh cả bàn chân xuống.",
+    image: null,
+    critical: true
+  },
+  {
+    id: 32,
+    chapter: "Động tác Đi nghiêm, Đứng lại",
+    question: "Ở cử động 1 đi nghiêm, tay phải đánh ra trước tạo với thân người một góc bao nhiêu độ?",
+    options: [
+      "Góc 80 độ, cách thân người 20 cm",
+      "Góc 60 độ, cách thân người 15 cm",
+      "Góc 90 độ, cách thân người 25 cm",
+      "Góc 45 độ, sát thân người"
+    ],
+    answer: 0,
+    explanation: "Khi đi nghiêm: Tay phải đánh ra trước khuỷu tay gập và nâng lên, cánh tay trên tạo với thân người góc 80 độ, cánh tay dưới song song mặt đất cách thân người 20 cm.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 33,
+    chapter: "Động tác Đi nghiêm, Đứng lại",
+    question: "Mép dưới của nắm tay phải khi đánh ra phía trước trong động tác Đi nghiêm nằm ở vị trí nào?",
+    options: [
+      "Cao ngang mép trên của túi áo ngực bên trái",
+      "Cao ngang thắt lưng",
+      "Cao ngang cằm",
+      "Cao ngang cúc áo thứ hai"
+    ],
+    answer: 0,
+    explanation: "Khi đi nghiêm: Nắm tay úp xuống, mép dưới của nắm tay cao ngang mép trên của túi áo ngực bên trái.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 34,
+    chapter: "Động tác Đi nghiêm, Đứng lại",
+    question: "Trong động tác Đi nghiêm, tay trái đánh về phía sau có đặc điểm gì?",
+    options: [
+      "Đánh về phía sau hết cỡ, cánh tay thẳng, sát thân người, lòng bàn tay quay vào trong",
+      "Đánh về sau góc 45 độ có gập khuỷu",
+      "Giữ nguyên sát hông",
+      "Đánh ra sau cách thân người 20 cm"
+    ],
+    answer: 0,
+    explanation: "Tay trái đánh về phía sau hết cỡ, cánh tay thẳng sát thân người, lòng bàn tay quay vào trong.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 35,
+    chapter: "Động tác Đi nghiêm, Đứng lại",
+    question: "Tốc độ chuẩn của động tác Đi nghiêm là bao nhiêu bước trong 1 phút?",
+    options: [
+      "106 bước / phút",
+      "100 bước / phút",
+      "112 bước / phút",
+      "120 bước / phút"
+    ],
+    answer: 0,
+    explanation: "Tốc độ đi nghiêm theo quy định điều lệnh là 106 bước trong 1 phút.",
+    image: null,
+    critical: true
+  },
+  {
+    id: 36,
+    chapter: "Động tác Đi nghiêm, Đứng lại",
+    question: "Chú ý nào sau đây đúng khi thực hiện động tác Đi nghiêm?",
+    options: [
+      "Chân bước lên đầu gối thẳng, không vung chân, không nện gót",
+      "Khi đặt chân xuống phải nện mạnh gót chân xuống đất",
+      "Mũi bàn chân chếch lên trên 45 độ",
+      "Tay đánh ra trước vuông góc 90 độ"
+    ],
+    answer: 0,
+    explanation: "Chú ý khi đi nghiêm: Chân bước lên đầu gối thẳng, không vung chân, mũi bàn chân không chếch lên, đặt bàn chân xuống không nện gót.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 37,
+    chapter: "Động tác Đi nghiêm, Đứng lại",
+    question: "Tay đánh ra phía trước trong động tác đi nghiêm phải duy trì yêu cầu nào?",
+    options: [
+      "Đánh nhịp nhàng, không giật cục, đánh về phía trước đúng độ cao, đánh về phía sau hết cỡ",
+      "Đánh mạnh giật dứt khoát",
+      "Chỉ đánh ngang thắt lưng",
+      "Giữ cánh tay thẳng tuyệt đối không gập khuỷu"
+    ],
+    answer: 0,
+    explanation: "Tay đánh nhịp nhàng, không giật cục, đánh về phía trước đúng độ cao (80 độ), đánh về phía sau hết cỡ.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 38,
+    chapter: "Động tác Đi nghiêm, Đứng lại",
+    question: "Khẩu lệnh \"Đi nghiêm - BƯỚC\" gồm có phần nào?",
+    options: [
+      "\"Đi nghiêm\" là dự lệnh, \"BƯỚC\" là động lệnh",
+      "\"Đi nghiêm\" là động lệnh",
+      "Cả câu là động lệnh",
+      "Không có dự lệnh"
+    ],
+    answer: 0,
+    explanation: "Khẩu lệnh 'Đi nghiêm - BƯỚC' có 'Đi nghiêm' là dự lệnh, 'BƯỚC' là động lệnh.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 39,
+    chapter: "Động tác Đi nghiêm, Đứng lại",
+    question: "Trong đi nghiêm, tư thế người trên duy trì như thế nào?",
+    options: [
+      "Tư thế người ngay ngắn, nghiêm trang, không nghiêng ngả, mắt nhìn thẳng",
+      "Cúi nhẹ đầu nhìn đường",
+      "Nghiêng người theo nhịp đánh tay",
+      "Ngửa mặt lên trời 15 độ"
+    ],
+    answer: 0,
+    explanation: "Tư thế người ngay ngắn, nghiêm trang, không nghiêng ngả, mắt nhìn thẳng.",
+    image: null,
+    critical: false
+  },
+
+  // CHƯƠNG 5: ĐI ĐỀU CHUYỂN THÀNH ĐI NGHIÊM CHÀO VÀ THÔI CHÀO (10 câu)
+  {
+    id: 40,
+    chapter: "Đi đều chuyển thành Đi nghiêm chào & Thôi chào",
+    question: "Trong động tác \"Đi đều chuyển thành đi nghiêm nhìn bên phải (trái) chào\", khẩu lệnh rơi vào chân nào?",
+    options: [
+      "Dự lệnh và động lệnh đều rơi vào chân trái",
+      "Dự lệnh và động lệnh đều rơi vào chân phải",
+      "Dự lệnh rơi chân phải, động lệnh rơi chân trái",
+      "Dự lệnh rơi chân trái, động lệnh rơi chân phải"
+    ],
+    answer: 0,
+    explanation: "Khẩu lệnh 'Nhìn bên phải (trái) - CHÀO': Dự lệnh và động lệnh đều rơi vào chân trái.",
+    image: null,
+    critical: true
+  },
+  {
+    id: 41,
+    chapter: "Đi đều chuyển thành Đi nghiêm chào & Thôi chào",
+    question: "Khi đi tập thể duyệt đội ngũ, dứt động lệnh \"CHÀO\", quân nhân hô \"Một\" và \"Hai\" khi bàn chân nào chạm đất?",
+    options: [
+      "Cử động 1 bàn chân trái chạm đất hô \"Một\", cử động 2 bàn chân trái chạm đất hô \"Hai\"",
+      "Cử động 1 bàn chân phải chạm đất hô \"Một\", cử động 2 bàn chân phải chạm đất hô \"Hai\"",
+      "Hô ngay sau khi nghe động lệnh CHÀO",
+      "Chỉ hô \"Một\" khi vừa nghe dứt động lệnh"
+    ],
+    answer: 0,
+    explanation: "Khi đi tập thể: Cử động 1 khi bàn chân trái vừa chạm đất hô 'Một'; cử động 2 khi bàn chân trái vừa chạm đất hô 'Hai'.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 42,
+    chapter: "Đi đều chuyển thành Đi nghiêm chào & Thôi chào",
+    question: "Ở cử động 1 của đi đều chuyển thành đi nghiêm nhìn bên phải chào, khi bàn chân trái vừa chạm đất thì mặt đánh lên bao nhiêu độ?",
+    options: [
+      "Mặt đánh lên 15 độ",
+      "Mặt đánh lên 20 độ",
+      "Quay mặt sang phải 45 độ ngay",
+      "Mặt giữ nguyên nhìn thẳng"
+    ],
+    answer: 0,
+    explanation: "Cử động 1: Chân phải bước lên, chân trái bước lên bước thứ 1, khi bàn chân trái vừa chạm đất mặt đánh lên 15 độ.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 43,
+    chapter: "Đi đều chuyển thành Đi nghiêm chào & Thôi chào",
+    question: "Ở cử động 2 của đi đều chuyển thành đi nghiêm chào, khi bàn chân trái vừa chạm đất thì thực hiện đồng thời động tác gì?",
+    options: [
+      "Chuyển thành đi nghiêm và quay mặt sang phải (trái) 45 độ chào",
+      "Đứng lại ngay lập tức",
+      "Đánh mặt xuống 15 độ",
+      "Thôi chào và quay mặt về trước"
+    ],
+    answer: 0,
+    explanation: "Cử động 2: Chân phải tiếp tục bước lên, chân trái bước lên bước thứ 2 chuyển thành đi nghiêm, đồng thời quay mặt sang phải (trái) 45 độ chào.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 44,
+    chapter: "Đi đều chuyển thành Đi nghiêm chào & Thôi chào",
+    question: "Khẩu lệnh \"Đi đều - BƯỚC\" trong động tác thôi chào khi đang đi nghiêm chào có đặc điểm rơi chân như thế nào?",
+    options: [
+      "Dự lệnh và động lệnh đều rơi vào chân trái",
+      "Dự lệnh rơi chân phải",
+      "Động lệnh rơi chân phải",
+      "Không quy định chân rơi"
+    ],
+    answer: 0,
+    explanation: "Khẩu lệnh 'Đi đều - BƯỚC': Dự lệnh 'Đi đều' và động lệnh 'BƯỚC' đều rơi vào chân trái.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 45,
+    chapter: "Đi đều chuyển thành Đi nghiêm chào & Thôi chào",
+    question: "Ở cử động 1 của động tác đi nghiêm chào chuyển thành đi đều thôi chào, khi bàn chân trái vừa chạm đất làm động tác gì?",
+    options: [
+      "Đồng thời quay mặt về trước",
+      "Đánh mặt xuống 15 độ ngay",
+      "Thôi chào hạ tay xuống",
+      "Chuyển sang đi đều"
+    ],
+    answer: 0,
+    explanation: "Cử động 1 thôi chào: Chân phải bước lên, chân trái bước lên bước thứ 1, khi bàn chân trái vừa chạm đất đồng thời quay mặt về trước.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 46,
+    chapter: "Đi đều chuyển thành Đi nghiêm chào & Thôi chào",
+    question: "Ở cử động 2 của động tác thôi chào, khi bàn chân trái vừa chạm đất thì thực hiện động tác gì?",
+    options: [
+      "Chuyển thành đi đều, đồng thời đánh mặt xuống 15 độ, trở lại động tác đi đều",
+      "Dừng bước lại",
+      "Chào lại lần nữa",
+      "Đánh tay về sau sát hông"
+    ],
+    answer: 0,
+    explanation: "Cử động 2: Chân phải bước lên, chân trái bước lên bước thứ 2 chuyển thành đi đều, bàn chân trái vừa chạm đất đánh mặt xuống 15 độ trở lại đi đều.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 47,
+    chapter: "Đi đều chuyển thành Đi nghiêm chào & Thôi chào",
+    question: "Chú ý quan trọng khi chuyển bước giữa đi đều và đi nghiêm là gì?",
+    options: [
+      "Chuyển bước đúng động tác, không bước quá dài hoặc bước ngắn lại, không tăng hoặc giảm tốc độ",
+      "Tăng tốc độ bước chân khi chuyển đi nghiêm",
+      "Bước dài hơn 90 cm",
+      "Nhảy đệm 1 bước trước khi chuyển"
+    ],
+    answer: 0,
+    explanation: "Chú ý: Chuyển bước đúng động tác, không bước quá dài hoặc bước ngắn lại, không tăng hoặc giảm tốc độ đi.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 48,
+    chapter: "Đi đều chuyển thành Đi nghiêm chào & Thôi chào",
+    question: "Khi chuyển bước phải đảm bảo sự phối hợp như thế nào?",
+    options: [
+      "Phải đúng vào chân trái (bước thứ 2), luyện 3 kết hợp: mặt, tay, chân cùng một lúc thật ăn khớp, nhịp nhàng, thống nhất",
+      "Rơi vào chân phải",
+      "Tay đánh trước chân bước sau",
+      "Mặt quay trước 3 bước"
+    ],
+    answer: 0,
+    explanation: "Khi chuyển bước phải đúng vào chân trái (bước thứ 2); luyện 3 kết hợp: mặt, tay, chân cùng một lúc thật ăn khớp nhịp nhàng thống nhất.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 49,
+    chapter: "Đi đều chuyển thành Đi nghiêm chào & Thôi chào",
+    question: "Ý nghĩa của động tác Đi đều chuyển thành Đi nghiêm chào là gì?",
+    options: [
+      "Thực hiện khi duyệt đội ngũ, duyệt binh, diễu binh... Để biểu thị phong cách quân nhân hùng mạnh, trang nghiêm, thống nhất của quân đội chính quy",
+      "Để thể hiện tập thể di chuyển trong hội trường",
+      "Để tập luyện thể lực buổi sáng",
+      "Để giải tán đội hình"
+    ],
+    answer: 0,
+    explanation: "Thực hiện khi duyệt đội ngũ, duyệt binh, diễu binh... biểu thị phong cách quân nhân hùng mạnh, trang nghiêm, thống nhất của quân đội chính quy.",
+    image: null,
+    critical: false
+  },
+
+  // CHƯƠNG 6: ĐỘNG TÁC BỎ MŨ, ĐẶT MŨ VÀ ĐỘI MŨ (16 câu)
+  {
+    id: 50,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Ý nghĩa của động tác Bỏ mũ, Đặt mũ, Đội mũ là gì?",
+    options: [
+      "Vận dụng khi học tập, sinh hoạt ở ngoài trời khi cần thiết phải bỏ mũ, hoặc khi kiểm tra tóc",
+      "Thực hiện khi chuẩn bị làm lễ chào cờ",
+      "Thực hiện khi giải tán đội hình",
+      "Thực hiện khi kiểm tra trang phục quân trang hằng ngày"
+    ],
+    answer: 0,
+    explanation: "Ý nghĩa: Để vận dụng trong khi học tập, sinh hoạt ở ngoài trời khi cần thiết phải bỏ mũ, hoặc khi kiểm tra tóc thực hiện được thống nhất, chính quy.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 51,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Khẩu lệnh \"BỎ MŨ\" có đặc điểm gì?",
+    options: [
+      "Chỉ có động lệnh, không có dự lệnh",
+      "Có dự lệnh \"Bỏ\" và động lệnh \"MŨ\"",
+      "Chỉ có dự lệnh",
+      "Khẩu lệnh hô kéo dài"
+    ],
+    answer: 0,
+    explanation: "Khẩu lệnh 'BỎ MŨ' chỉ có động lệnh, không có dự lệnh.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 52,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Ở cử động 1 của động tác Bỏ mũ Kê-pi, tay nào đưa lên nắm lưỡi trai?",
+    options: [
+      "Tay trái đưa lên nắm phía trước chính giữa lưỡi trai (ngón cái bên trong, 4 ngón con bên ngoài)",
+      "Tay phải đưa lên nắm lưỡi trai",
+      "Dùng cả hai tay cầm hai bên vành mũ",
+      "Tay trái cầm vành mũ bên trái"
+    ],
+    answer: 0,
+    explanation: "Cử động 1 bỏ mũ: Tay trái đưa lên nắm phía trước chính giữa lưỡi trai, ngón tay cái bên trong, 4 ngón con khép lại bên ngoài.",
+    image: null,
+    critical: true
+  },
+  {
+    id: 53,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Ở cử động 2 của động tác Bỏ mũ, vị trí đặt mũ trên tay trái như thế nào?",
+    options: [
+      "Mũ nằm trên cánh tay dưới thăng bằng (vuông góc cánh tay trên hình chữ L), quân hiệu hướng ở phía trước",
+      "Mũ kẹp vào nách trái, quân hiệu hướng lên trên",
+      "Mũ cầm bằng ngón tay trỏ và ngón cái để ngang hông",
+      "Mũ cầm bằng tay phải ngửa lòng bàn tay"
+    ],
+    answer: 0,
+    explanation: "Cử động 2 bỏ mũ: Tay trái đưa xuống, cánh tay dưới thăng bằng vuông góc cánh tay trên (chữ L), mũ nằm trên cánh tay dưới, quân hiệu ở phía trước.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 54,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Nếu mũ Kê-pi có quai ở cằm, trước khi đưa tay lên nắm lưỡi trai bỏ mũ phải làm thao tác gì?",
+    options: [
+      "Dùng ngón tay cái đưa quai mũ ra khỏi cằm rồi mới đưa tay lên nắm lưỡi trai",
+      "Kéo mạnh quai mũ ra đằng sau cổ",
+      "Tháo rời quai mũ cất vào túi áo",
+      "Giữ nguyên quai mũ và nhấc mũ ra"
+    ],
+    answer: 0,
+    explanation: "Nếu có quai mũ ở cằm: dùng ngón tay cái đưa quai mũ ra khỏi cằm, rồi mới đưa tay lên nắm lưỡi trai cởi mũ.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 55,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Trong động tác Đội mũ (sau khi đã bỏ mũ trên tay), tay nào đưa mũ lên đội?",
+    options: [
+      "Tay trái đưa mũ lên đội và sửa ngay ngắn xong đưa tay về đứng nghiêm",
+      "Tay phải cầm mũ đưa lên đội",
+      "Dùng hai tay nâng mũ đội lên",
+      "Cúi đầu xuống tự chui vào mũ"
+    ],
+    answer: 0,
+    explanation: "Động tác đội mũ: Tay trái đưa mũ lên đội và sửa ngay ngắn xong đưa tay về tư thế đứng nghiêm.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 56,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Khẩu lệnh \"ĐẶT MŨ\" có đặc điểm gì?",
+    options: [
+      "Chỉ có động lệnh, không có dự lệnh",
+      "Có dự lệnh 'Đặt' và động lệnh 'MŨ'",
+      "Chỉ có dự lệnh",
+      "Cần dự lệnh chuẩn bị"
+    ],
+    answer: 0,
+    explanation: "Khẩu lệnh 'ĐẶT MŨ' chỉ có động lệnh, không có dự lệnh.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 57,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Ở cử động 2 của động tác Đặt mũ xuống đất, hai tay cầm mũ ở vị trí nào?",
+    options: [
+      "Tay phải cầm bên phải vành mũ (4 ngón con phía dưới, ngón cái phía trên), tay trái cầm bên trái vành mũ",
+      "Hai tay cầm hai bên lưỡi trai",
+      "Tay trái cầm đằng sau vành mũ",
+      "Tay phải cầm quân hiệu"
+    ],
+    answer: 0,
+    explanation: "Cử động 2 đặt mũ: tay phải đưa lên cầm bên phải vành mũ (4 ngón con dưới, ngón cái trên), tay trái đưa lên nắm bên trái vành mũ.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 58,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Trong động tác Đặt mũ xuống đất, mũ được đặt ở vị trí nào so với chân?",
+    options: [
+      "Đặt xuống đất cách đầu bàn chân 20 cm, quân hiệu hướng về trước",
+      "Đặt xuống đất sát mép ngoài chân trái 10 cm",
+      "Đặt xuống đất phía sau gót chân 30 cm",
+      "Đặt xuống đất bên phải chân 15 cm"
+    ],
+    answer: 0,
+    explanation: "Động tác đặt mũ: Cúi người xuống đặt mũ xuống đất cách đầu bàn chân 20 cm, quân hiệu hướng về trước.",
+    image: null,
+    critical: true
+  },
+  {
+    id: 59,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Nếu người học sinh hoạt đặt mũ trên ba lô thì yêu cầu hướng quân hiệu như thế nào?",
+    options: [
+      "Quân hiệu hướng về phía trước",
+      "Quân hiệu hướng lên trời",
+      "Quân hiệu quay vào trong ba lô",
+      "Không quy định hướng quân hiệu"
+    ],
+    answer: 0,
+    explanation: "Đặt trên ba lô: quân hiệu hướng về trước, đặt xong về tư thế đứng nghiêm.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 60,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Nếu ngồi trong hội trường, vị trí đặt mũ Kê-pi ở đâu?",
+    options: [
+      "Đặt trên bàn ở phía trước bên trái, quân hiệu hướng về trước",
+      "Đặt dưới gầm ghế ngồi",
+      "Đặt trên đùi bên phải",
+      "Treo đằng sau tựa ghế"
+    ],
+    answer: 0,
+    explanation: "Nếu ngồi trong hội trường: Mũ đặt trên bàn ở phía trước bên trái, quân hiệu hướng về trước.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 61,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Động tác Đội mũ (từ vị trí mũ đang đặt dưới đất/trên bàn) thực hiện qua mấy cử động?",
+    options: [
+      "2 cử động",
+      "3 cử động",
+      "1 cử động",
+      "4 cử động"
+    ],
+    answer: 0,
+    explanation: "Động tác đội mũ từ đất/bàn gồm 2 cử động: Cử động 1 cúi người nâng mũ đứng thẳng; Cử động 2 tay trái cầm lưỡi trai đội lên đầu.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 62,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Ở cử động 1 của động tác đội mũ từ dưới đất, hai tay nâng mũ như thế nào?",
+    options: [
+      "Tay phải nắm vành mũ bên phải (4 ngón dưới, ngón cái trên), tay trái nắm vành mũ bên trái, đứng thẳng người lên nâng mũ",
+      "Cầm ngửa lòng bàn tay kéo mũ lên",
+      "Tay trái xách lưỡi trai đứng lên",
+      "Tay phải nhấc mũ đặt lên đùi"
+    ],
+    answer: 0,
+    explanation: "Cử động 1 đội mũ: Cúi người hai tay nắm vành mũ (tay phải bên phải, tay trái bên trái), đứng thẳng người lên nâng mũ.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 63,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Ở cử động 2 của động tác đội mũ từ dưới đất, tay phải làm gì sau khi tay trái cầm lưỡi trai?",
+    options: [
+      "Tay phải rời vành mũ về đứng nghiêm",
+      "Tay phải cùng nâng mũ lên đầu",
+      "Tay phải đặt vào cằm giữ quai",
+      "Tay phải giữ quân hiệu"
+    ],
+    answer: 0,
+    explanation: "Cử động 2: Tay trái đưa lên cầm phía trước lưỡi trai, tay phải rời vành mũ về đứng nghiêm, tay trái đưa mũ lên đội.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 64,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Khi đặt mũ hoặc đội mũ, điểm nào sau đây cần đặc biệt chú ý?",
+    options: [
+      "Tay không mắm chờm lên quân hiệu, không nói chuyện, đầu ngay thẳng không nghiêng ngả",
+      "Đặt mũ thật nhanh rồi ngồi xuống ngay",
+      "Có thể nói chuyện nhẹ khi đang thực hiện",
+      "Cúi đầu nhìn xuống mũ cho đến khi hô xong"
+    ],
+    answer: 0,
+    explanation: "Chú ý khi đặt/đội mũ: Tay không mắm chờm lên quân hiệu, không nói chuyện, đầu ngay thẳng không nghiêng ngả, không cúi xuống.",
+    image: null,
+    critical: false
+  },
+  {
+    id: 65,
+    chapter: "Động tác Bỏ mũ, Đặt mũ & Đội mũ",
+    question: "Khi đặt mũ xuống đất hoặc trên bàn, yêu cầu hàng xếp mũ khi tập thể như thế nào?",
+    options: [
+      "Phải thẳng hàng ngang, hàng dọc, quân hiệu hướng về trước",
+      "Đặt tự do quanh chân",
+      "Xếp theo hình tròn",
+      "Đặt chéo 45 độ"
+    ],
+    answer: 0,
+    explanation: "Khi đặt mũ tập thể: phải thẳng hàng ngang, hàng dọc, quân hiệu hướng về trước.",
+    image: null,
+    critical: false
+  }
+]
+
+const dir = path.join(process.cwd(), 'src', 'modules', 'huan-luyen-dieu-lenh')
+fs.mkdirSync(dir, { recursive: true })
+
+fs.writeFileSync(
+  path.join(dir, 'questions.json'),
+  JSON.stringify(questions, null, 2),
+  'utf-8'
+)
+
+const configContent = `export const HL_DIEU_LENH_MODULE = {
+  id: 'huan-luyen-dieu-lenh',
+  name: 'Điều Lệnh Quân Đội (QNCN)',
+  shortName: 'Điều Lệnh Quân Đội (QNCN)',
+  questionCount: ${questions.length},
+  criticalCount: ${questions.filter(q => q.critical).length},
+  description: 'Bộ 65 câu hỏi trắc nghiệm kiểm tra lý thuyết Điều lệnh đội ngũ Quân đội nhân dân Việt Nam (QNCN)',
+}
+`
+
+fs.writeFileSync(path.join(dir, 'config.ts'), configContent, 'utf-8')
+
+const indexContent = `import questionsJson from './questions.json'
+import { HL_DIEU_LENH_MODULE } from './config'
+import type { Question } from '../../types'
+
+export const hlDieuLenhQuestions = questionsJson as Question[]
+export { HL_DIEU_LENH_MODULE }
+`
+
+fs.writeFileSync(path.join(dir, 'index.ts'), indexContent, 'utf-8')
+
+console.log('Successfully generated ' + questions.length + ' comprehensive questions for Dieu Lenh!')
