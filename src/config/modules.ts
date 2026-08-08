@@ -22,8 +22,8 @@ export const PORTAL_MODULES: PortalModule[] = [
   },
   {
     id: 'huan-luyen-dieu-lenh',
-    title: 'ĐIỀU LỆNH QUÂN ĐỘI (QNCN)',
-    shortTitle: 'ĐIỀU LỆNH QUÂN ĐỘI (QNCN)',
+    title: 'Điều Lệnh Quân Đội (QNCN)',
+    shortTitle: 'Điều Lệnh Quân Đội (QNCN)',
     badge: '36 câu',
     active: true,
     description: 'Bộ câu hỏi trắc nghiệm kiểm tra lý thuyết Điều lệnh đội ngũ Quân đội nhân dân Việt Nam (QNCN)',
