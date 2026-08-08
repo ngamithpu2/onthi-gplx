@@ -76,6 +76,19 @@ function Header({
   onNavigate: (view: View) => void
   onSignOut: () => void
 }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -83,17 +96,63 @@ function Header({
           <strong className="brand-title">K602 Portal</strong>
         </button>
 
-        <div className="header-module-tabs" aria-label="Danh mục bộ đề">
-          {PORTAL_MODULES.map((mod) => (
-            <button
-              key={mod.id}
-              className={`module-tab-btn ${mod.id === currentModule.id ? 'active' : ''}`}
-              onClick={() => onSelectModule(mod)}
-            >
-              <span>{mod.shortTitle}</span>
-              <small>{mod.badge}</small>
-            </button>
-          ))}
+        <div className="module-selector-wrapper" ref={dropdownRef}>
+          <button
+            type="button"
+            className={`module-selector-btn ${isOpen ? 'active' : ''}`}
+            onClick={() => setIsOpen(!isOpen)}
+            aria-expanded={isOpen}
+            aria-label="Chọn bộ đề ôn luyện"
+          >
+            <span className="selector-icon">{currentModule.id === 'gplx-a1' ? '🛵' : '🎖️'}</span>
+            <span className="selector-title">{currentModule.shortTitle}</span>
+            <span className="selector-badge">{currentModule.badge}</span>
+            <svg className={`selector-arrow ${isOpen ? 'open' : ''}`} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {isOpen && (
+            <div className="module-dropdown-menu">
+              <div className="dropdown-menu-header">
+                <span>DANH MỤC BỘ ĐỀ ÔN LUYỆN</span>
+                <small>{PORTAL_MODULES.length} bộ đề sẵn có</small>
+              </div>
+
+              <div className="dropdown-menu-list">
+                {PORTAL_MODULES.map((mod) => {
+                  const isSelected = mod.id === currentModule.id
+                  return (
+                    <button
+                      key={mod.id}
+                      className={`dropdown-menu-item ${isSelected ? 'selected' : ''}`}
+                      onClick={() => {
+                        onSelectModule(mod)
+                        setIsOpen(false)
+                      }}
+                    >
+                      <div className="menu-item-icon">{mod.id === 'gplx-a1' ? '🛵' : '🎖️'}</div>
+                      <div className="menu-item-content">
+                        <strong>{mod.title}</strong>
+                        <span>{mod.badge} • {mod.questionCount} câu trắc nghiệm</span>
+                      </div>
+                      {isSelected && (
+                        <div className="menu-item-check">
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="dropdown-menu-footer">
+                <span className="footer-hint">💡 Các bộ đề ôn luyện khác sẽ tiếp tục được mở rộng...</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
