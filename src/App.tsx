@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { gplxA1Questions } from './modules/gplx-a1'
-import { hlDieuLenhQuestions } from './modules/huan-luyen-dieu-lenh'
 import { PORTAL_MODULES, type PortalModule } from './config/modules'
 import {
   buildExam,
@@ -853,7 +852,7 @@ function Admin() {
 
 export default function App() {
   const [currentModule, setCurrentModule] = useState<PortalModule>(PORTAL_MODULES[0])
-  const questions = currentModule.id === 'huan-luyen-dieu-lenh' ? hlDieuLenhQuestions : gplxA1Questions
+  const questions = gplxA1Questions
 
   const [state, setState] = useState<LocalState>(INITIAL_STATE)
   const [loaded, setLoaded] = useState(false)
