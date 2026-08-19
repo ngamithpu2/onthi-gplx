@@ -257,23 +257,6 @@ function Home({
   }).length
   const chapters = [...new Set(questions.map((question) => question.chapter))]
 
-  const [selectedCount, setSelectedCount] = useState(Math.min(30, questions.length))
-  const [customInput, setCustomInput] = useState('')
-
-  const presets = [10, 15, 20, 25, 30, questions.length]
-  const currentCount = customInput ? Math.min(questions.length, Math.max(5, Number(customInput) || 20)) : selectedCount
-  const estimatedDuration = calculateExamDuration(currentCount)
-
-  const handlePresetSelect = (count: number) => {
-    setSelectedCount(count)
-    setCustomInput('')
-  }
-
-  const handleCustomInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/\D/g, '')
-    setCustomInput(val)
-  }
-
   return (
     <main className="page-shell">
       <section className="hero-grid">
@@ -393,44 +376,18 @@ function Home({
         <aside className="panel exam-panel" ref={examPanelRef}>
           <div className="exam-panel-header">
             <span className="eyebrow">Mô phỏng kỳ thi</span>
-            <h2>Thi thử tùy chỉnh</h2>
-            <p>Chọn số lượng câu hỏi phù hợp với thời gian học tập của bạn.</p>
+            <h2>Thi thử sát hạch</h2>
+            <p>Bộ đề 50 câu hỏi trắc nghiệm gồm ít nhất 4 câu điểm liệt trong thời gian 30 phút.</p>
           </div>
 
-          <div className="exam-config-box">
-            <div className="exam-config-title">
-              <span>Số câu hỏi bài thi</span>
-              <small style={{ color: 'var(--text-muted)', textTransform: 'none' }}>Tối đa 150 câu</small>
+          <div className="exam-summary-strip" style={{ marginTop: '16px' }}>
+            <div className="exam-summary-item">
+              <span>Số câu hỏi</span>
+              <strong>50 câu (≥4 câu liệt)</strong>
             </div>
-            <div className="exam-presets-grid">
-              {presets.map((count) => (
-                <button
-                  key={count}
-                  type="button"
-                  className={`preset-chip ${!customInput && selectedCount === count ? 'active' : ''}`}
-                  onClick={() => handlePresetSelect(count)}
-                >
-                  {count === 150 ? 'Tất cả (150)' : `${count} câu`}
-                </button>
-              ))}
-            </div>
-            <div className="custom-count-input">
-              <label htmlFor="custom-questions-count">Nhập số câu khác:</label>
-              <input
-                id="custom-questions-count"
-                type="text"
-                maxLength={3}
-                placeholder="5 - 150"
-                value={customInput}
-                onChange={handleCustomInputChange}
-              />
-            </div>
-          </div>
-
-          <div className="exam-summary-strip">
             <div className="exam-summary-item">
               <span>Thời gian</span>
-              <strong>{estimatedDuration} phút</strong>
+              <strong>30 phút</strong>
             </div>
             <div className="exam-summary-item">
               <span>Lượt đã thi</span>
@@ -440,9 +397,10 @@ function Home({
 
           <button
             className="primary-exam-button"
-            onClick={() => onStartExam(currentCount, estimatedDuration)}
+            onClick={() => onStartExam(50, 30)}
+            style={{ marginTop: '20px' }}
           >
-            Bắt đầu thi thử ({currentCount} câu)
+            Bắt đầu thi thử (50 câu - 30 phút)
           </button>
         </aside>
       </section>
@@ -768,6 +726,7 @@ function Exam({
   const startedAt = useRef(new Date().toISOString())
   const questionStartedAt = useRef(Date.now())
   const questionTimes = useRef<Record<number, number>>({})
+  const matrixScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setExamQuestions(buildExam(questions, profile))
@@ -784,6 +743,15 @@ function Exam({
 
   const currentIndex = Math.min(Math.max(0, index), examQuestions.length - 1)
   const question = examQuestions[currentIndex]
+
+  useEffect(() => {
+    if (matrixScrollRef.current) {
+      const activeBtn = matrixScrollRef.current.children[currentIndex] as HTMLElement
+      if (activeBtn) {
+        activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+      }
+    }
+  }, [currentIndex])
 
   const finishExam = () => {
     const durationUsedSeconds = profile.durationMinutes * 60 - seconds
@@ -1019,7 +987,7 @@ function Exam({
 
       {/* Exam Question Matrix Navigation Bar */}
       <div className="exam-matrix-bar">
-        <div className="exam-matrix-scroll">
+        <div className="exam-matrix-scroll" ref={matrixScrollRef}>
           {examQuestions.map((q, idx) => {
             const isAnswered = selectedAnswers[q.id] !== undefined
             const isCurrent = idx === currentIndex
@@ -1331,12 +1299,7 @@ export default function App() {
   }
 
   const handleOpenExamFromNav = () => {
-    if (view !== 'home') {
-      setView('home')
-    }
-    setTimeout(() => {
-      examPanelRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, 100)
+    handleStartExam(50, 30)
   }
 
   const handleSignOut = async () => {

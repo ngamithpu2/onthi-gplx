@@ -3,10 +3,10 @@ import type { ExamProfile, Question, QuestionProgress } from './types'
 const DAY = 24 * 60 * 60 * 1000
 
 export const DEFAULT_EXAM_PROFILE: ExamProfile = {
-  name: 'Thi thử tự đánh giá',
-  questionCount: 30,
-  durationMinutes: 20,
-  passScore: null,
+  name: 'Mô phỏng kỳ thi (50 câu)',
+  questionCount: 50,
+  durationMinutes: 30,
+  passScore: 42,
   criticalRule: 'unverified',
 }
 
@@ -106,21 +106,33 @@ export function selectModeQuestions(
   return questions
 }
 
-export function calculateExamDuration(questionCount: number): number {
-  const duration = Math.round(questionCount * (20 / 30))
-  return Math.max(5, duration)
+export function calculateExamDuration(_questionCount?: number): number {
+  return 30
 }
 
 export function buildExam(
   questions: Question[],
-  profileOrCount: ExamProfile | number,
+  _profileOrCount?: ExamProfile | number,
 ): Question[] {
-  const count = typeof profileOrCount === 'number' ? profileOrCount : profileOrCount.questionCount
-  const safeCount = Math.max(1, Math.min(count, questions.length))
-  const critical = seededSort(questions.filter((question) => question.critical))
-  const regular = seededSort(questions.filter((question) => !question.critical))
-  const criticalCount = Math.min(critical.length, Math.max(1, Math.floor(safeCount * 0.15)))
-  return uniqueQuestions([critical.slice(0, criticalCount), regular, critical]).slice(0, safeCount)
+  const targetTotal = 50
+  const safeTotal = Math.min(targetTotal, questions.length)
+
+  const allCritical = seededSort(questions.filter((q) => q.critical))
+  const allRegular = seededSort(questions.filter((q) => !q.critical))
+
+  // Pick at least 4 critical questions
+  const minCritical = Math.min(allCritical.length, 4)
+  const criticalCount = Math.min(
+    allCritical.length,
+    Math.max(minCritical, Math.floor(Math.random() * (allCritical.length - minCritical + 1)) + minCritical),
+  )
+
+  const chosenCritical = allCritical.slice(0, criticalCount)
+  const regularNeeded = safeTotal - chosenCritical.length
+  const chosenRegular = allRegular.slice(0, regularNeeded)
+
+  // Shuffle all together
+  return seededSort([...chosenCritical, ...chosenRegular]).slice(0, safeTotal)
 }
 
 export function recordAnswer(
