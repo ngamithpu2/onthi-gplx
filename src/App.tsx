@@ -318,18 +318,13 @@ function Home({
               const seenCount = chapterQuestions.filter(
                 (question) => (state.progress[question.id]?.seen ?? 0) > 0,
               ).length
-              const mastered = chapterQuestions.filter(
-                (question) => (state.progress[question.id]?.mastery ?? 0) >= 3,
-              ).length
+              const remainingCount = chapterQuestions.length - seenCount
               const percentLearned = Math.round((seenCount / chapterQuestions.length) * 100)
               const isComplete = percentLearned === 100
 
-              const key = `chapter:${chapter}`
+              // The next question to study is ALWAYS the first unpracticed question
               const firstUnseenIdx = chapterQuestions.findIndex((q) => !state.progress[q.id]?.seen)
-              let currentStudyingIdx = state.sessionProgress?.[key]
-              if (currentStudyingIdx === undefined || currentStudyingIdx === null) {
-                currentStudyingIdx = firstUnseenIdx !== -1 ? firstUnseenIdx : 0
-              }
+              const resumeIdx = firstUnseenIdx !== -1 ? firstUnseenIdx : 0
               const isStudying = seenCount > 0 && !isComplete
 
               const fillBg = isComplete
@@ -352,7 +347,7 @@ function Home({
                     <div className="chapter-badges-group">
                       {isStudying && (
                         <span className="chapter-resume-badge">
-                          Tiếp tục: Câu {Math.min(currentStudyingIdx + 1, chapterQuestions.length)}/{chapterQuestions.length}
+                          Tiếp tục: Câu {resumeIdx + 1}/{chapterQuestions.length}
                         </span>
                       )}
                       <span className={`chapter-percent ${isComplete ? 'complete' : percentLearned > 0 ? 'active' : ''}`}>
@@ -365,7 +360,7 @@ function Home({
                   </div>
                   <div className="chapter-row-footer">
                     <span>Đã học: <b>{seenCount}/{chapterQuestions.length} câu</b></span>
-                    <span>Đã vững: <b>{mastered}/{chapterQuestions.length} câu</b></span>
+                    <span>{isComplete ? <b style={{ color: '#059669' }}>✓ Đã hoàn thành</b> : <>Còn lại: <b>{remainingCount} câu</b></>}</span>
                   </div>
                 </button>
               )
@@ -1242,20 +1237,12 @@ export default function App() {
       queue = buildTodayQueue(questions, state.progress)
     }
     const firstUnseenIdx = queue.findIndex((q) => !state.progress[q.id]?.seen)
-    const savedIndex = state.sessionProgress?.[key]
-    let initialIdx = 0
-    if (savedIndex !== undefined && savedIndex !== null && savedIndex >= 0 && savedIndex < queue.length) {
-      initialIdx = savedIndex
-    } else if (firstUnseenIdx !== -1) {
-      initialIdx = firstUnseenIdx
-    } else {
-      initialIdx = 0
-    }
+    const initialIdx = firstUnseenIdx !== -1 ? firstUnseenIdx : 0
 
     const titles: Record<Exclude<StudyMode, 'exam'>, string> = {
       today: 'Kế hoạch ôn tập',
       all: `Toàn bộ ${questions.length} câu`,
-      weak: 'Củng cố câu yếu',
+      weak: 'Củng cố câu hay làm sai',
       critical: 'Câu trọng yếu (Điểm liệt)',
     }
     setStudyQueue(queue)
@@ -1269,15 +1256,7 @@ export default function App() {
     const chapterQuestions = questions.filter((question) => question.chapter === chapter)
     const key = `chapter:${chapter}`
     const firstUnseenIdx = chapterQuestions.findIndex((q) => !state.progress[q.id]?.seen)
-    const savedIndex = state.sessionProgress?.[key]
-    let initialIdx = 0
-    if (savedIndex !== undefined && savedIndex !== null && savedIndex >= 0 && savedIndex < chapterQuestions.length) {
-      initialIdx = savedIndex
-    } else if (firstUnseenIdx !== -1) {
-      initialIdx = firstUnseenIdx
-    } else {
-      initialIdx = 0
-    }
+    const initialIdx = firstUnseenIdx !== -1 ? firstUnseenIdx : 0
 
     setStudyQueue(chapterQuestions)
     setStudySessionKey(key)
