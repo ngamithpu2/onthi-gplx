@@ -280,7 +280,7 @@ function Home({
         <div className="hero-card">
           <div>
             <div className="eyebrow">{currentModule.shortTitle}</div>
-            <h1>{currentModule.name}</h1>
+            <h1>{currentModule.title}</h1>
             <p>{currentModule.description}</p>
           </div>
         </div>
@@ -341,6 +341,14 @@ function Home({
               const percentLearned = Math.round((seenCount / chapterQuestions.length) * 100)
               const isComplete = percentLearned === 100
 
+              const key = `chapter:${chapter}`
+              const firstUnseenIdx = chapterQuestions.findIndex((q) => !state.progress[q.id]?.seen)
+              let currentStudyingIdx = state.sessionProgress?.[key]
+              if (currentStudyingIdx === undefined || currentStudyingIdx === null) {
+                currentStudyingIdx = firstUnseenIdx !== -1 ? firstUnseenIdx : 0
+              }
+              const isStudying = seenCount > 0 && !isComplete
+
               const fillBg = isComplete
                 ? 'linear-gradient(90deg, rgba(6, 182, 212, 0.14) 0%, rgba(37, 99, 235, 0.14) 100%)'
                 : percentLearned > 0
@@ -358,9 +366,16 @@ function Home({
                 >
                   <div className="chapter-row-header">
                     <strong>{chapter}</strong>
-                    <span className={`chapter-percent ${isComplete ? 'complete' : percentLearned > 0 ? 'active' : ''}`}>
-                      {percentLearned}% đã học
-                    </span>
+                    <div className="chapter-badges-group">
+                      {isStudying && (
+                        <span className="chapter-resume-badge">
+                          Tiếp tục: Câu {Math.min(currentStudyingIdx + 1, chapterQuestions.length)}/{chapterQuestions.length}
+                        </span>
+                      )}
+                      <span className={`chapter-percent ${isComplete ? 'complete' : percentLearned > 0 ? 'active' : ''}`}>
+                        {percentLearned}% đã học
+                      </span>
+                    </div>
                   </div>
                   <div className="bar">
                     <i className={isComplete ? 'complete-bar' : ''} style={{ width: `${percentLearned}%` }} />
@@ -443,6 +458,9 @@ function QuestionCard({
   answered,
   unsure,
   examMode,
+  canPrev,
+  canNext,
+  onPrev,
   onSelect,
   onToggleUnsure,
   onNext,
@@ -454,6 +472,9 @@ function QuestionCard({
   answered: boolean
   unsure: boolean
   examMode: boolean
+  canPrev?: boolean
+  canNext?: boolean
+  onPrev?: () => void
   onSelect: (index: number) => void
   onToggleUnsure: () => void
   onNext: () => void
@@ -463,7 +484,7 @@ function QuestionCard({
       <div className="question-topline">
         <span className="question-index-badge">Câu {position} / {total} (Mã #{question.id})</span>
         <div className="question-badges">
-          {question.critical && <b className="critical-badge">Câu trọng yếu</b>}
+          {question.critical && <b className="critical-badge">★ Câu trọng yếu (Điểm liệt)</b>}
           <span className="chapter-badge">{question.chapter}</span>
         </div>
       </div>
@@ -489,7 +510,7 @@ function QuestionCard({
             <button
               className={`option-button ${stateClass}`}
               onClick={() => onSelect(index)}
-              disabled={answered}
+              disabled={answered && !examMode}
               key={option}
             >
               <span className="option-letter">{LETTERS[index]}</span>
@@ -507,14 +528,30 @@ function QuestionCard({
 
       {answered && !examMode && (
         <div className={`feedback-box ${selected === question.answer ? 'success' : 'error'}`}>
-          <bold>{selected === question.answer ? 'Chính xác' : 'Chưa chính xác'}</bold>
+          <strong>{selected === question.answer ? '✓ Chính xác' : '✗ Chưa chính xác'}</strong>
+          <p style={{ marginTop: '4px' }}><strong>Đáp án đúng:</strong> {question.options[question.answer]}</p>
+        </div>
+      )}
+
+      {answered && examMode && (
+        <div className={`feedback-box ${selected === question.answer ? 'success' : 'error'}`}>
+          <strong>{selected === question.answer ? '✓ Chính xác' : selected === -1 || selected === null ? '⚠️ Bạn chưa trả lời câu này' : '✗ Chưa chính xác'}</strong>
           <p style={{ marginTop: '4px' }}><strong>Đáp án đúng:</strong> {question.options[question.answer]}</p>
         </div>
       )}
 
       <div className="sticky-bottom-actions">
-        <button className="primary-button" disabled={selected === null} onClick={onNext}>
-          {examMode ? 'Lưu & Tiếp tục' : answered ? 'Câu tiếp theo' : 'Kiểm tra đáp án'}
+        {canPrev !== undefined && onPrev && (
+          <button className="outline-button nav-prev-btn" disabled={!canPrev} onClick={onPrev}>
+            ← Câu trước
+          </button>
+        )}
+        <button
+          className="primary-button nav-next-btn"
+          disabled={!examMode && selected === null && !answered}
+          onClick={onNext}
+        >
+          {examMode ? (position === total ? 'Nộp bài thi' : 'Câu tiếp theo →') : answered ? (position === total ? 'Hoàn thành' : 'Câu tiếp theo →') : 'Kiểm tra đáp án'}
         </button>
       </div>
     </article>
@@ -524,50 +561,104 @@ function QuestionCard({
 function Study({
   queue,
   title,
+  sessionKey,
+  initialIndex = 0,
   setState,
   onExit,
 }: {
   queue: Question[]
   title: string
+  sessionKey?: string
+  initialIndex?: number
+  state: LocalState
   setState: React.Dispatch<React.SetStateAction<LocalState>>
   onExit: () => void
 }) {
-  const [items, setItems] = useState(queue)
-  const [index, setIndex] = useState(0)
-  const [selected, setSelected] = useState<number | null>(null)
-  const [answered, setAnswered] = useState(false)
-  const [unsure, setUnsure] = useState(false)
+  const [items] = useState(queue)
+  const [index, setIndex] = useState(() => Math.min(Math.max(0, initialIndex), Math.max(0, queue.length - 1)))
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, { selected: number; answered: boolean; correct: boolean }>>({})
+  const [unsureMap, setUnsureMap] = useState<Record<number, boolean>>({})
+  const [showNavigator, setShowNavigator] = useState(false)
   const startedAt = useRef(Date.now())
-  const question = items[index]
+
+  useEffect(() => {
+    setIndex(Math.min(Math.max(0, initialIndex), Math.max(0, queue.length - 1)))
+  }, [initialIndex])
+
+  const currentIndex = Math.min(Math.max(0, index), items.length - 1)
+  const question = items[currentIndex]
+
+  const updateSavedIndex = (newIdx: number) => {
+    if (sessionKey) {
+      setState((current) => ({
+        ...current,
+        sessionProgress: {
+          ...(current.sessionProgress || {}),
+          [sessionKey]: newIdx,
+        },
+        lastUpdatedAt: new Date().toISOString(),
+      }))
+    }
+  }
+
+  const currentAnswerState = question ? selectedAnswers[question.id] : undefined
+  const selected = currentAnswerState ? currentAnswerState.selected : null
+  const answered = currentAnswerState ? currentAnswerState.answered : false
+  const unsure = question ? (unsureMap[question.id] ?? false) : false
+
+  const goToIndex = (newIdx: number) => {
+    const clamped = Math.max(0, Math.min(newIdx, items.length - 1))
+    setIndex(clamped)
+    updateSavedIndex(clamped)
+    startedAt.current = Date.now()
+  }
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if ('1234'.includes(event.key) && !answered) {
+      if ('1234'.includes(event.key) && !answered && question) {
         const option = Number(event.key) - 1
-        if (question && option < question.options.length) setSelected(option)
+        if (option < question.options.length) {
+          setSelectedAnswers((prev) => ({
+            ...prev,
+            [question.id]: { selected: option, answered: false, correct: false },
+          }))
+        }
+      } else if (event.key === 'ArrowLeft' && currentIndex > 0) {
+        goToIndex(currentIndex - 1)
+      } else if (event.key === 'ArrowRight' && currentIndex < items.length - 1 && answered) {
+        goToIndex(currentIndex + 1)
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [answered, question])
+  }, [answered, question, currentIndex, items.length])
 
-  if (!question) {
-    return (
-      <main className="center-page">
-        <div className="completion-card">
-          <h1>Hoàn thành phiên học</h1>
-          <p style={{ margin: '12px 0 24px', color: 'var(--text-muted)' }}>Bạn đã hoàn thành toàn bộ câu hỏi trong phiên này.</p>
-          <button className="primary-button" onClick={onExit}>Về trang tổng quan</button>
-        </div>
-      </main>
-    )
+  const handleSelect = (optionIndex: number) => {
+    if (!question || answered) return
+    setSelectedAnswers((prev) => ({
+      ...prev,
+      [question.id]: { selected: optionIndex, answered: false, correct: false },
+    }))
   }
 
-  const handleNext = () => {
-    if (selected === null) return
+  const handleToggleUnsure = () => {
+    if (!question) return
+    setUnsureMap((prev) => ({ ...prev, [question.id]: !prev[question.id] }))
+  }
+
+  const handleCheckOrNext = () => {
+    if (!question || selected === null) return
+
     if (!answered) {
       const correct = selected === question.answer
       const responseMs = Date.now() - startedAt.current
+      const nextIdxToSave = Math.min(currentIndex + 1, items.length - 1)
+
+      setSelectedAnswers((prev) => ({
+        ...prev,
+        [question.id]: { selected, answered: true, correct },
+      }))
+
       setState((current) => ({
         ...current,
         progress: {
@@ -580,73 +671,255 @@ function Study({
             responseMs,
           ),
         },
+        sessionProgress: {
+          ...(current.sessionProgress || {}),
+          ...(sessionKey ? { [sessionKey]: nextIdxToSave } : {}),
+        },
         lastUpdatedAt: new Date().toISOString(),
       }))
-      if (!correct && !items.slice(index + 1).some((item) => item.id === question.id)) {
-        setItems((current) => {
-          const updated = [...current]
-          updated.splice(Math.min(index + 6, updated.length), 0, question)
-          return updated
-        })
-      }
-      setAnswered(true)
       return
     }
-    setIndex((value) => value + 1)
-    setSelected(null)
-    setAnswered(false)
-    setUnsure(false)
-    startedAt.current = Date.now()
+
+    if (currentIndex < items.length - 1) {
+      goToIndex(currentIndex + 1)
+    }
+  }
+
+  const handleRestart = () => {
+    if (window.confirm('Bạn có muốn học lại phần này từ câu đầu tiên không?')) {
+      setSelectedAnswers({})
+      goToIndex(0)
+      setShowNavigator(false)
+    }
+  }
+
+  if (!question) {
+    return (
+      <main className="center-page">
+        <div className="completion-card">
+          <span className="eyebrow">Chúc mừng</span>
+          <h1>Hoàn thành phiên học</h1>
+          <p style={{ margin: '12px 0 24px', color: 'var(--text-muted)' }}>
+            Bạn đã hoàn thành toàn bộ {items.length} câu hỏi trong phiên học này.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <button className="outline-button" onClick={handleRestart}>Học lại từ đầu</button>
+            <button className="primary-button" onClick={onExit}>Về trang tổng quan</button>
+          </div>
+        </div>
+      </main>
+    )
   }
 
   return (
     <main className="study-shell">
       <div className="study-header">
-        <button className="back-button" onClick={onExit}>Thoát</button>
+        <button className="back-button" onClick={onExit}>← Thoát</button>
         <div className="study-session-meta">
           <strong>{title}</strong>
-          <span>{items.length - index - 1} câu còn lại</span>
+          <span className="study-sub-badge">Câu {currentIndex + 1} / {items.length}</span>
         </div>
+        <button
+          className="navigator-toggle-btn"
+          onClick={() => setShowNavigator(true)}
+          title="Xem danh sách câu hỏi"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          <span>Danh sách câu</span>
+        </button>
       </div>
+
+      {/* Quick navigator bar */}
+      <div className="study-quick-nav">
+        <button
+          className="study-nav-arrow"
+          disabled={currentIndex === 0}
+          onClick={() => goToIndex(currentIndex - 1)}
+          aria-label="Câu trước"
+        >
+          ‹
+        </button>
+        <div className="study-quick-dots">
+          {items.map((q, idx) => {
+            const ans = selectedAnswers[q.id]
+            const isCurrent = idx === currentIndex
+            const isCorrect = ans?.answered && ans?.correct
+            const isWrong = ans?.answered && !ans?.correct
+            const isAnswered = Boolean(ans?.answered)
+
+            let dotClass = 'study-nav-chip'
+            if (isCurrent) dotClass += ' current'
+            if (isCorrect) dotClass += ' correct'
+            else if (isWrong) dotClass += ' wrong'
+            else if (isAnswered) dotClass += ' answered'
+
+            return (
+              <button
+                key={q.id}
+                className={dotClass}
+                onClick={() => goToIndex(idx)}
+                title={`Câu ${idx + 1}${q.critical ? ' (Điểm liệt)' : ''}`}
+              >
+                {idx + 1}
+              </button>
+            )
+          })}
+        </div>
+        <button
+          className="study-nav-arrow"
+          disabled={currentIndex === items.length - 1}
+          onClick={() => goToIndex(currentIndex + 1)}
+          aria-label="Câu sau"
+        >
+          ›
+        </button>
+      </div>
+
       <QuestionCard
         question={question}
-        position={index + 1}
+        position={currentIndex + 1}
         total={items.length}
         selected={selected}
         answered={answered}
         unsure={unsure}
         examMode={false}
-        onSelect={setSelected}
-        onToggleUnsure={() => setUnsure((value) => !value)}
-        onNext={handleNext}
+        canPrev={currentIndex > 0}
+        canNext={currentIndex < items.length - 1}
+        onPrev={() => goToIndex(currentIndex - 1)}
+        onSelect={handleSelect}
+        onToggleUnsure={handleToggleUnsure}
+        onNext={handleCheckOrNext}
       />
+
+      {/* Modal Drawer for full question list */}
+      {showNavigator && (
+        <div className="dialog-backdrop" onClick={() => setShowNavigator(false)}>
+          <div className="question-matrix-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="matrix-modal-header">
+              <h3>Danh sách câu hỏi ({items.length} câu)</h3>
+              <button className="dialog-close" onClick={() => setShowNavigator(false)}>×</button>
+            </div>
+            <div className="matrix-modal-legend">
+              <span className="legend-item"><i className="legend-chip current"></i> Đang xem</span>
+              <span className="legend-item"><i className="legend-chip correct"></i> Đúng</span>
+              <span className="legend-item"><i className="legend-chip wrong"></i> Sai</span>
+              <span className="legend-item"><i className="legend-chip"></i> Chưa làm</span>
+            </div>
+            <div className="matrix-modal-grid">
+              {items.map((q, idx) => {
+                const ans = selectedAnswers[q.id]
+                const isCurrent = idx === currentIndex
+                const isCorrect = ans?.answered && ans?.correct
+                const isWrong = ans?.answered && !ans?.correct
+                return (
+                  <button
+                    key={q.id}
+                    className={`matrix-grid-btn ${isCurrent ? 'current' : ''} ${isCorrect ? 'correct' : ''} ${isWrong ? 'wrong' : ''}`}
+                    onClick={() => {
+                      goToIndex(idx)
+                      setShowNavigator(false)
+                    }}
+                  >
+                    <span className="q-number">{idx + 1}</span>
+                    {q.critical && <span className="q-critical-dot" title="Câu điểm liệt">★</span>}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="matrix-modal-footer">
+              <button className="outline-button" onClick={handleRestart}>Làm lại nhóm từ đầu</button>
+              <button className="primary-button" onClick={() => setShowNavigator(false)}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
 
 function Exam({
+  questions,
   profile,
   setState,
   onExit,
 }: {
+  questions: Question[]
   state: LocalState
   profile: ExamProfile
   setState: React.Dispatch<React.SetStateAction<LocalState>>
   onExit: () => void
 }) {
-  const [examQuestions] = useState(() => buildExam(questions, profile))
+  const [examQuestions, setExamQuestions] = useState(() => buildExam(questions, profile))
   const [index, setIndex] = useState(0)
-  const [selected, setSelected] = useState<number | null>(null)
-  const [answers, setAnswers] = useState<AttemptAnswer[]>([])
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({})
   const [seconds, setSeconds] = useState(profile.durationMinutes * 60)
-  const [result, setResult] = useState<{ score: number; total: number } | null>(null)
+  const [showConfirmSubmit, setShowConfirmSubmit] = useState(false)
+  const [reviewMode, setReviewMode] = useState(false)
+  const [result, setResult] = useState<{
+    score: number
+    total: number
+    passed: boolean
+    criticalFailed: boolean
+    criticalFailedCount: number
+    answeredCount: number
+    durationUsedSeconds: number
+  } | null>(null)
+
   const startedAt = useRef(new Date().toISOString())
   const questionStartedAt = useRef(Date.now())
+  const questionTimes = useRef<Record<number, number>>({})
 
-  const finish = (finalAnswers: AttemptAnswer[]) => {
-    const score = finalAnswers.filter((answer) => answer.correct).length
+  useEffect(() => {
+    setExamQuestions(buildExam(questions, profile))
+    setIndex(0)
+    setSelectedAnswers({})
+    setSeconds(profile.durationMinutes * 60)
+    setShowConfirmSubmit(false)
+    setReviewMode(false)
+    setResult(null)
+    startedAt.current = new Date().toISOString()
+    questionStartedAt.current = Date.now()
+    questionTimes.current = {}
+  }, [profile, questions])
+
+  const currentIndex = Math.min(Math.max(0, index), examQuestions.length - 1)
+  const question = examQuestions[currentIndex]
+
+  const finishExam = () => {
+    const durationUsedSeconds = profile.durationMinutes * 60 - seconds
+    const finalAnswers: AttemptAnswer[] = examQuestions.map((q) => {
+      const chosen = selectedAnswers[q.id]
+      const isCorrect = chosen !== undefined && chosen === q.answer
+      return {
+        questionId: q.id,
+        selected: chosen !== undefined ? chosen : -1,
+        correct: isCorrect,
+        responseMs: questionTimes.current[q.id] || 0,
+      }
+    })
+
+    const score = finalAnswers.filter((a) => a.correct).length
+    const answeredCount = Object.keys(selectedAnswers).length
+
+    // Check critical questions
+    const criticalQuestions = examQuestions.filter((q) => q.critical)
+    const criticalFailedCount = criticalQuestions.filter(
+      (q) => selectedAnswers[q.id] === undefined || selectedAnswers[q.id] !== q.answer,
+    ).length
+    const criticalFailed = criticalFailedCount > 0
+
+    // Standard A1 rule: >= 84% pass rate and NO critical questions wrong
+    const passThreshold = Math.ceil(examQuestions.length * 0.84)
+    const passed = score >= passThreshold && !criticalFailed
+
+    const attemptId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `att-${Date.now()}`
     const attempt: MockAttempt = {
-      id: crypto.randomUUID(),
+      id: attemptId,
       startedAt: startedAt.current,
       finishedAt: new Date().toISOString(),
       score,
@@ -654,17 +927,20 @@ function Exam({
       answers: finalAnswers,
       profileName: `${profile.questionCount} câu - ${profile.durationMinutes} phút`,
     }
+
     setState((current) => {
       const progress = { ...current.progress }
-      for (const answer of finalAnswers) {
-        const questionItem = questions.find((item) => item.id === answer.questionId)!
-        progress[answer.questionId] = recordAnswer(
-          progress[answer.questionId],
-          questionItem,
-          answer.correct,
-          false,
-          answer.responseMs,
-        )
+      for (const ans of finalAnswers) {
+        const questionItem = questions.find((item) => item.id === ans.questionId)
+        if (questionItem) {
+          progress[ans.questionId] = recordAnswer(
+            progress[ans.questionId],
+            questionItem,
+            ans.correct,
+            false,
+            ans.responseMs,
+          )
+        }
       }
       return {
         ...current,
@@ -673,83 +949,268 @@ function Exam({
         lastUpdatedAt: new Date().toISOString(),
       }
     })
-    setResult({ score, total: examQuestions.length })
+
+    setResult({
+      score,
+      total: examQuestions.length,
+      passed,
+      criticalFailed,
+      criticalFailedCount,
+      answeredCount,
+      durationUsedSeconds,
+    })
+    setShowConfirmSubmit(false)
   }
 
+  // Timer countdown
   useEffect(() => {
     if (result) return
     const timer = window.setInterval(() => {
       setSeconds((value) => {
         if (value <= 1) {
           window.clearInterval(timer)
-          finish(answers)
+          finishExam()
           return 0
         }
         return value - 1
       })
     }, 1000)
     return () => window.clearInterval(timer)
-  }, [answers, result])
+  }, [result])
 
-  if (result) {
+  const handleSelect = (optionIdx: number) => {
+    if (!question || result) return
+    const elapsed = Date.now() - questionStartedAt.current
+    questionTimes.current[question.id] = (questionTimes.current[question.id] || 0) + elapsed
+    questionStartedAt.current = Date.now()
+    setSelectedAnswers((prev) => ({ ...prev, [question.id]: optionIdx }))
+  }
+
+  const goToQuestion = (targetIdx: number) => {
+    if (question) {
+      const elapsed = Date.now() - questionStartedAt.current
+      questionTimes.current[question.id] = (questionTimes.current[question.id] || 0) + elapsed
+    }
+    setIndex(Math.max(0, Math.min(targetIdx, examQuestions.length - 1)))
+    questionStartedAt.current = Date.now()
+  }
+
+  // Keyboard shortcut support in Exam mode
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if ('1234'.includes(event.key) && !result && !reviewMode && question) {
+        const option = Number(event.key) - 1
+        if (option < question.options.length) {
+          handleSelect(option)
+        }
+      } else if (event.key === 'ArrowLeft' && currentIndex > 0) {
+        goToQuestion(currentIndex - 1)
+      } else if (event.key === 'ArrowRight' && currentIndex < examQuestions.length - 1) {
+        goToQuestion(currentIndex + 1)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [result, reviewMode, question, currentIndex, examQuestions.length])
+
+  const handleRestartExam = () => {
+    const newQuestions = buildExam(questions, profile)
+    setExamQuestions(newQuestions)
+    setIndex(0)
+    setSelectedAnswers({})
+    setSeconds(profile.durationMinutes * 60)
+    setResult(null)
+    setReviewMode(false)
+    startedAt.current = new Date().toISOString()
+    questionStartedAt.current = Date.now()
+    questionTimes.current = {}
+  }
+
+  // Results screen
+  if (result && !reviewMode) {
     const percentage = Math.round((result.score / result.total) * 100)
+    const minutesUsed = Math.floor(result.durationUsedSeconds / 60)
+    const secondsUsed = result.durationUsedSeconds % 60
+
     return (
       <main className="center-page">
-        <div className="completion-card result-card">
-          <span className="eyebrow">Kết quả bài thi</span>
-          <strong className="big-score">{result.score} / {result.total}</strong>
-          <p style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '6px' }}>
-            Đạt {percentage}% tổng số câu hỏi
-          </p>
-          <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '20px' }}>
-            Đã hoàn thành và ghi nhận kết quả thi vào dữ liệu của bạn.
-          </p>
-          <button className="primary-button" onClick={onExit}>Về trang tổng quan</button>
+        <div className={`completion-card result-card ${result.passed ? 'passed' : 'failed'}`}>
+          <div className="exam-result-header">
+            <span className={`exam-status-badge ${result.passed ? 'pass-badge' : 'fail-badge'}`}>
+              {result.passed ? '✓ ĐẠT YÊU CẦU' : '✗ CHƯA ĐẠT'}
+            </span>
+            {result.criticalFailed && (
+              <div className="critical-warning-box">
+                ⚠️ Bạn đã làm sai {result.criticalFailedCount} câu điểm liệt (câu trọng yếu). Theo quy chế sát hạch, bài thi bị đánh trượt.
+              </div>
+            )}
+          </div>
+
+          <div className="exam-big-score-wrap">
+            <strong className="big-score">{result.score} / {result.total}</strong>
+            <span className="big-score-sub">{percentage}% tổng điểm (Yêu cầu: ≥ 84%)</span>
+          </div>
+
+          <div className="exam-breakdown-grid">
+            <div className="breakdown-box">
+              <span className="label">Số câu đúng</span>
+              <strong className="value text-success">{result.score}</strong>
+            </div>
+            <div className="breakdown-box">
+              <span className="label">Số câu sai</span>
+              <strong className="value text-danger">{result.answeredCount - result.score}</strong>
+            </div>
+            <div className="breakdown-box">
+              <span className="label">Chưa làm</span>
+              <strong className="value text-muted">{result.total - result.answeredCount}</strong>
+            </div>
+            <div className="breakdown-box">
+              <span className="label">Thời gian thi</span>
+              <strong className="value">{minutesUsed}p {secondsUsed}s</strong>
+            </div>
+          </div>
+
+          <div className="exam-result-actions">
+            <button className="primary-button" onClick={() => setReviewMode(true)}>
+              🔍 Xem lại bài làm chi tiết
+            </button>
+            <button className="outline-button" onClick={handleRestartExam}>
+              🔄 Thi đề mới
+            </button>
+            <button className="subtle-button" onClick={onExit}>
+              Về trang chủ
+            </button>
+          </div>
         </div>
       </main>
     )
   }
 
-  const question = examQuestions[index]
-  const submitQuestion = () => {
-    if (selected === null) return
-    const answer: AttemptAnswer = {
-      questionId: question.id,
-      selected,
-      correct: selected === question.answer,
-      responseMs: Date.now() - questionStartedAt.current,
-    }
-    const updated = [...answers, answer]
-    setAnswers(updated)
-    if (index === examQuestions.length - 1) {
-      finish(updated)
-      return
-    }
-    setIndex((value) => value + 1)
-    setSelected(null)
-    questionStartedAt.current = Date.now()
-  }
+  const selected = question ? (selectedAnswers[question.id] ?? null) : null
+  const unansweredCount = examQuestions.length - Object.keys(selectedAnswers).length
 
   return (
     <main className="study-shell exam-shell">
-      <div className="study-header">
-        <button className="back-button" onClick={onExit}>Dừng bài thi</button>
-        <div className="timer" aria-label="Thời gian còn lại">
-          <span>{String(Math.floor(seconds / 60)).padStart(2, '0')}:{String(seconds % 60).padStart(2, '0')}</span>
+      <div className="study-header exam-top-header">
+        <button
+          className="back-button"
+          onClick={() => {
+            if (reviewMode) {
+              setReviewMode(false)
+            } else if (window.confirm('Bạn có chắc muốn thoát và dừng bài thi này?')) {
+              onExit()
+            }
+          }}
+        >
+          {reviewMode ? '← Bảng kết quả' : 'Dừng bài thi'}
+        </button>
+
+        {!reviewMode && (
+          <div className={`timer ${seconds < 120 ? 'timer-warning' : ''}`} aria-label="Thời gian còn lại">
+            <span>⏱️ {String(Math.floor(seconds / 60)).padStart(2, '0')}:{String(seconds % 60).padStart(2, '0')}</span>
+          </div>
+        )}
+
+        {reviewMode ? (
+          <div className="review-mode-indicator">
+            <span className="badge-review">Chế độ xem lại bài thi</span>
+          </div>
+        ) : (
+          <button className="submit-exam-btn" onClick={() => setShowConfirmSubmit(true)}>
+            Nộp bài
+          </button>
+        )}
+      </div>
+
+      {/* Exam Question Matrix Navigation Bar */}
+      <div className="exam-matrix-bar">
+        <div className="exam-matrix-scroll">
+          {examQuestions.map((q, idx) => {
+            const isAnswered = selectedAnswers[q.id] !== undefined
+            const isCurrent = idx === currentIndex
+            let chipClass = 'exam-nav-chip'
+            if (isCurrent) chipClass += ' active'
+
+            if (reviewMode) {
+              const ans = selectedAnswers[q.id]
+              const isCorrect = ans !== undefined && ans === q.answer
+              chipClass += isCorrect ? ' correct' : ' wrong'
+            } else if (isAnswered) {
+              chipClass += ' answered'
+            }
+
+            return (
+              <button
+                key={q.id}
+                className={chipClass}
+                onClick={() => goToQuestion(idx)}
+                title={`Câu ${idx + 1}${q.critical ? ' (Điểm liệt)' : ''}`}
+              >
+                <span>{idx + 1}</span>
+                {q.critical && <b className="critical-star">★</b>}
+              </button>
+            )
+          })}
         </div>
       </div>
-      <QuestionCard
-        question={question}
-        position={index + 1}
-        total={examQuestions.length}
-        selected={selected}
-        answered={false}
-        unsure={false}
-        examMode
-        onSelect={setSelected}
-        onToggleUnsure={() => undefined}
-        onNext={submitQuestion}
-      />
+
+      {question && (
+        <QuestionCard
+          question={question}
+          position={currentIndex + 1}
+          total={examQuestions.length}
+          selected={selected}
+          answered={reviewMode}
+          unsure={false}
+          examMode={!reviewMode}
+          canPrev={currentIndex > 0}
+          canNext={currentIndex < examQuestions.length - 1}
+          onPrev={() => goToQuestion(currentIndex - 1)}
+          onNext={() => {
+            if (reviewMode) {
+              if (currentIndex < examQuestions.length - 1) {
+                goToQuestion(currentIndex + 1)
+              } else {
+                setReviewMode(false)
+              }
+            } else {
+              if (currentIndex < examQuestions.length - 1) {
+                goToQuestion(currentIndex + 1)
+              } else {
+                setShowConfirmSubmit(true)
+              }
+            }
+          }}
+          onSelect={handleSelect}
+          onToggleUnsure={() => undefined}
+        />
+      )}
+
+      {/* Confirm Submission Dialog */}
+      {showConfirmSubmit && (
+        <div className="dialog-backdrop" onClick={() => setShowConfirmSubmit(false)}>
+          <div className="auth-dialog confirm-submit-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Xác nhận nộp bài thi</h3>
+            {unansweredCount > 0 ? (
+              <div className="form-error" style={{ background: '#fffbeb', borderColor: '#fde68a', color: '#92400e', margin: '12px 0' }}>
+                ⚠️ <strong>Lưu ý:</strong> Bạn vẫn còn <strong>{unansweredCount} câu</strong> chưa chọn đáp án!
+              </div>
+            ) : (
+              <p style={{ margin: '12px 0', color: 'var(--text-muted)' }}>
+                Bạn đã trả lời đầy đủ {examQuestions.length}/{examQuestions.length} câu hỏi. Bạn có chắc chắn muốn nộp bài thi?
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+              <button className="outline-button" style={{ flex: 1 }} onClick={() => setShowConfirmSubmit(false)}>
+                Làm tiếp
+              </button>
+              <button className="primary-button" style={{ flex: 1 }} onClick={finishExam}>
+                Xác nhận nộp
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
@@ -859,9 +1320,12 @@ export default function App() {
   const [view, setView] = useState<View>('home')
   const [studyQueue, setStudyQueue] = useState<Question[]>([])
   const [studyTitle, setStudyTitle] = useState('Phiên học')
+  const [studySessionKey, setStudySessionKey] = useState<string>('')
+  const [studyInitialIndex, setStudyInitialIndex] = useState<number>(0)
   const [auth, setAuth] = useState<AuthState>({ session: null, user: null, role: 'learner', displayName: null })
   const [authOpen, setAuthOpen] = useState(false)
   const [examProfile, setExamProfile] = useState<ExamProfile>(DEFAULT_EXAM_PROFILE)
+  const [examSessionId, setExamSessionId] = useState(0)
   const examPanelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -902,28 +1366,59 @@ export default function App() {
   }, [auth.user, state.progress])
 
   const startStudy = (mode: Exclude<StudyMode, 'exam'>) => {
-    const queue = mode === 'today'
-      ? buildTodayQueue(questions, state.progress)
-      : selectModeQuestions(mode, questions, state.progress)
-    if (!queue.length) {
-      setStudyQueue(buildTodayQueue(questions, state.progress))
+    const key = `mode:${mode}`
+    let queue: Question[] = []
+    if (mode === 'all') {
+      queue = [...questions]
+    } else if (mode === 'today') {
+      queue = buildTodayQueue(questions, state.progress)
     } else {
-      setStudyQueue(queue)
+      queue = selectModeQuestions(mode, questions, state.progress)
     }
+    if (!queue.length) {
+      queue = buildTodayQueue(questions, state.progress)
+    }
+    const firstUnseenIdx = queue.findIndex((q) => !state.progress[q.id]?.seen)
+    const savedIndex = state.sessionProgress?.[key]
+    let initialIdx = 0
+    if (savedIndex !== undefined && savedIndex !== null && savedIndex >= 0 && savedIndex < queue.length) {
+      initialIdx = savedIndex
+    } else if (firstUnseenIdx !== -1) {
+      initialIdx = firstUnseenIdx
+    } else {
+      initialIdx = 0
+    }
+
     const titles: Record<Exclude<StudyMode, 'exam'>, string> = {
       today: 'Kế hoạch ôn tập',
       all: `Toàn bộ ${questions.length} câu`,
       weak: 'Củng cố câu yếu',
       critical: 'Câu trọng yếu (Điểm liệt)',
     }
+    setStudyQueue(queue)
+    setStudySessionKey(key)
+    setStudyInitialIndex(initialIdx)
     setStudyTitle(titles[mode])
     setView('study')
   }
 
   const startChapterStudy = (chapter: string) => {
     const chapterQuestions = questions.filter((question) => question.chapter === chapter)
-    const queue = buildTodayQueue(chapterQuestions, state.progress, chapterQuestions.length)
-    setStudyQueue(queue)
+    const key = `chapter:${chapter}`
+    const firstUnseenIdx = chapterQuestions.findIndex((q) => !state.progress[q.id]?.seen)
+    const savedIndex = state.sessionProgress?.[key]
+    let initialIdx = 0
+    if (savedIndex !== undefined && savedIndex !== null && savedIndex >= 0 && savedIndex < chapterQuestions.length) {
+      initialIdx = savedIndex
+    } else if (firstUnseenIdx !== -1) {
+      initialIdx = firstUnseenIdx
+    } else {
+      initialIdx = 0
+    }
+
+    setStudyQueue(chapterQuestions)
+    setStudySessionKey(key)
+    setStudyInitialIndex(initialIdx)
     setStudyTitle(`Luyện theo nhóm: ${chapter}`)
     setView('study')
   }
@@ -936,6 +1431,7 @@ export default function App() {
       passScore: null,
       criticalRule: 'unverified',
     })
+    setExamSessionId((prev) => prev + 1)
     setView('exam')
   }
 
@@ -1000,8 +1496,27 @@ export default function App() {
           onStartExam={handleStartExam}
         />
       )}
-      {view === 'study' && <Study queue={studyQueue} title={studyTitle} setState={setState} onExit={() => setView('home')} />}
-      {view === 'exam' && <Exam state={state} profile={examProfile} setState={setState} onExit={() => setView('home')} />}
+      {view === 'study' && (
+        <Study
+          queue={studyQueue}
+          title={studyTitle}
+          sessionKey={studySessionKey}
+          initialIndex={studyInitialIndex}
+          state={state}
+          setState={setState}
+          onExit={() => setView('home')}
+        />
+      )}
+      {view === 'exam' && (
+        <Exam
+          key={`exam-session-${examSessionId}`}
+          questions={questions}
+          state={state}
+          profile={examProfile}
+          setState={setState}
+          onExit={() => setView('home')}
+        />
+      )}
       {view === 'admin' && auth.role === 'admin' && <Admin />}
       {authOpen && <AuthDialog onClose={() => setAuthOpen(false)} onSignedIn={handleSignedIn} />}
       <MobileBottomNav

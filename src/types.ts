@@ -43,6 +43,7 @@ export type LocalState = {
   version: 1
   progress: Record<number, QuestionProgress>
   attempts: MockAttempt[]
+  sessionProgress?: Record<string, number>
   lastUpdatedAt: string
 }
 

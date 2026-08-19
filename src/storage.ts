@@ -7,6 +7,7 @@ export const INITIAL_STATE: LocalState = {
   version: 1,
   progress: {},
   attempts: [],
+  sessionProgress: {},
   lastUpdatedAt: new Date(0).toISOString(),
 }
 
