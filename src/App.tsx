@@ -325,7 +325,6 @@ function Home({
               // The next question to study is ALWAYS the first unpracticed question
               const firstUnseenIdx = chapterQuestions.findIndex((q) => !state.progress[q.id]?.seen)
               const resumeIdx = firstUnseenIdx !== -1 ? firstUnseenIdx : 0
-              const isStudying = seenCount > 0 && !isComplete
 
               const fillBg = isComplete
                 ? 'linear-gradient(90deg, rgba(6, 182, 212, 0.14) 0%, rgba(37, 99, 235, 0.14) 100%)'
@@ -344,23 +343,16 @@ function Home({
                 >
                   <div className="chapter-row-header">
                     <strong>{chapter}</strong>
-                    <div className="chapter-badges-group">
-                      {isStudying && (
-                        <span className="chapter-resume-badge">
-                          Tiếp tục: Câu {resumeIdx + 1}/{chapterQuestions.length}
-                        </span>
-                      )}
-                      <span className={`chapter-percent ${isComplete ? 'complete' : percentLearned > 0 ? 'active' : ''}`}>
-                        {percentLearned}% đã học
-                      </span>
-                    </div>
+                    <span className={`chapter-percent ${isComplete ? 'complete' : percentLearned > 0 ? 'active' : ''}`}>
+                      {percentLearned}% đã học
+                    </span>
                   </div>
                   <div className="bar">
                     <i className={isComplete ? 'complete-bar' : ''} style={{ width: `${percentLearned}%` }} />
                   </div>
                   <div className="chapter-row-footer">
-                    <span>Đã học: <b>{seenCount}/{chapterQuestions.length} câu</b></span>
-                    <span>{isComplete ? <b style={{ color: '#059669' }}>✓ Đã hoàn thành</b> : <>Còn lại: <b>{remainingCount} câu</b></>}</span>
+                    <span>{isComplete ? <>Đã hoàn thành: <b>{chapterQuestions.length}/{chapterQuestions.length} câu</b></> : <>Tiếp tục: <b>Câu {resumeIdx + 1}/{chapterQuestions.length}</b></>}</span>
+                    <span>{isComplete ? <b style={{ color: '#059669' }}>✓ Đạt yêu cầu</b> : <>Còn lại: <b>{remainingCount} câu</b></>}</span>
                   </div>
                 </button>
               )
@@ -372,13 +364,13 @@ function Home({
           <div className="exam-panel-header">
             <span className="eyebrow">Mô phỏng kỳ thi</span>
             <h2>Thi thử sát hạch</h2>
-            <p>Bộ đề 50 câu hỏi trắc nghiệm gồm ít nhất 4 câu điểm liệt trong thời gian 30 phút.</p>
+            <p>Bộ đề 50 câu hỏi trắc nghiệm trong thời gian 30 phút.</p>
           </div>
 
           <div className="exam-summary-strip" style={{ marginTop: '16px' }}>
             <div className="exam-summary-item">
               <span>Số câu hỏi</span>
-              <strong>50 câu (≥4 câu liệt)</strong>
+              <strong>50 câu</strong>
             </div>
             <div className="exam-summary-item">
               <span>Thời gian</span>
