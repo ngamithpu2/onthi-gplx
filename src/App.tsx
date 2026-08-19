@@ -318,13 +318,10 @@ function Home({
               const seenCount = chapterQuestions.filter(
                 (question) => (state.progress[question.id]?.seen ?? 0) > 0,
               ).length
-              const remainingCount = chapterQuestions.length - seenCount
+              const remainingCount = Math.max(0, chapterQuestions.length - seenCount)
               const percentLearned = Math.round((seenCount / chapterQuestions.length) * 100)
               const isComplete = percentLearned === 100
-
-              // The next question to study is ALWAYS the first unpracticed question
-              const firstUnseenIdx = chapterQuestions.findIndex((q) => !state.progress[q.id]?.seen)
-              const resumeIdx = firstUnseenIdx !== -1 ? firstUnseenIdx : 0
+              const nextQuestionNum = Math.min(seenCount + 1, chapterQuestions.length)
 
               const fillBg = isComplete
                 ? 'linear-gradient(90deg, rgba(6, 182, 212, 0.14) 0%, rgba(37, 99, 235, 0.14) 100%)'
@@ -351,7 +348,7 @@ function Home({
                     <i className={isComplete ? 'complete-bar' : ''} style={{ width: `${percentLearned}%` }} />
                   </div>
                   <div className="chapter-row-footer">
-                    <span>{isComplete ? <>Đã hoàn thành: <b>{chapterQuestions.length}/{chapterQuestions.length} câu</b></> : <>Tiếp tục: <b>Câu {resumeIdx + 1}/{chapterQuestions.length}</b></>}</span>
+                    <span>{isComplete ? <>Đã hoàn thành: <b>{chapterQuestions.length}/{chapterQuestions.length} câu</b></> : <>Tiếp tục: <b>Câu {nextQuestionNum}/{chapterQuestions.length}</b></>}</span>
                     <span>{isComplete ? <b style={{ color: '#059669' }}>✓ Đạt yêu cầu</b> : <>Còn lại: <b>{remainingCount} câu</b></>}</span>
                   </div>
                 </button>
@@ -1228,8 +1225,10 @@ export default function App() {
     if (!queue.length) {
       queue = buildTodayQueue(questions, state.progress)
     }
-    const firstUnseenIdx = queue.findIndex((q) => !state.progress[q.id]?.seen)
-    const initialIdx = firstUnseenIdx !== -1 ? firstUnseenIdx : 0
+    const seenCount = queue.filter(
+      (question) => (state.progress[question.id]?.seen ?? 0) > 0,
+    ).length
+    const initialIdx = Math.min(seenCount, queue.length - 1)
 
     const titles: Record<Exclude<StudyMode, 'exam'>, string> = {
       today: 'Kế hoạch ôn tập',
@@ -1247,8 +1246,10 @@ export default function App() {
   const startChapterStudy = (chapter: string) => {
     const chapterQuestions = questions.filter((question) => question.chapter === chapter)
     const key = `chapter:${chapter}`
-    const firstUnseenIdx = chapterQuestions.findIndex((q) => !state.progress[q.id]?.seen)
-    const initialIdx = firstUnseenIdx !== -1 ? firstUnseenIdx : 0
+    const seenCount = chapterQuestions.filter(
+      (question) => (state.progress[question.id]?.seen ?? 0) > 0,
+    ).length
+    const initialIdx = Math.min(seenCount, chapterQuestions.length - 1)
 
     setStudyQueue(chapterQuestions)
     setStudySessionKey(key)
