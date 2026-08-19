@@ -578,7 +578,6 @@ function Study({
   const [index, setIndex] = useState(() => Math.min(Math.max(0, initialIndex), Math.max(0, queue.length - 1)))
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, { selected: number; answered: boolean; correct: boolean }>>({})
   const [unsureMap, setUnsureMap] = useState<Record<number, boolean>>({})
-  const [showNavigator, setShowNavigator] = useState(false)
   const startedAt = useRef(Date.now())
 
   useEffect(() => {
@@ -689,7 +688,6 @@ function Study({
     if (window.confirm('Bạn có muốn học lại phần này từ câu đầu tiên không?')) {
       setSelectedAnswers({})
       goToIndex(0)
-      setShowNavigator(false)
     }
   }
 
@@ -717,67 +715,7 @@ function Study({
         <button className="back-button" onClick={onExit}>← Thoát</button>
         <div className="study-session-meta">
           <strong>{title}</strong>
-          <span className="study-sub-badge">Câu {currentIndex + 1} / {items.length}</span>
         </div>
-        <button
-          className="navigator-toggle-btn"
-          onClick={() => setShowNavigator(true)}
-          title="Xem danh sách câu hỏi"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="7" height="7" rx="1" />
-            <rect x="14" y="3" width="7" height="7" rx="1" />
-            <rect x="3" y="14" width="7" height="7" rx="1" />
-            <rect x="14" y="14" width="7" height="7" rx="1" />
-          </svg>
-          <span>Danh sách câu</span>
-        </button>
-      </div>
-
-      {/* Quick navigator bar */}
-      <div className="study-quick-nav">
-        <button
-          className="study-nav-arrow"
-          disabled={currentIndex === 0}
-          onClick={() => goToIndex(currentIndex - 1)}
-          aria-label="Câu trước"
-        >
-          ‹
-        </button>
-        <div className="study-quick-dots">
-          {items.map((q, idx) => {
-            const ans = selectedAnswers[q.id]
-            const isCurrent = idx === currentIndex
-            const isCorrect = ans?.answered && ans?.correct
-            const isWrong = ans?.answered && !ans?.correct
-            const isAnswered = Boolean(ans?.answered)
-
-            let dotClass = 'study-nav-chip'
-            if (isCurrent) dotClass += ' current'
-            if (isCorrect) dotClass += ' correct'
-            else if (isWrong) dotClass += ' wrong'
-            else if (isAnswered) dotClass += ' answered'
-
-            return (
-              <button
-                key={q.id}
-                className={dotClass}
-                onClick={() => goToIndex(idx)}
-                title={`Câu ${idx + 1}${q.critical ? ' (Điểm liệt)' : ''}`}
-              >
-                {idx + 1}
-              </button>
-            )
-          })}
-        </div>
-        <button
-          className="study-nav-arrow"
-          disabled={currentIndex === items.length - 1}
-          onClick={() => goToIndex(currentIndex + 1)}
-          aria-label="Câu sau"
-        >
-          ›
-        </button>
       </div>
 
       <QuestionCard
@@ -795,49 +733,6 @@ function Study({
         onToggleUnsure={handleToggleUnsure}
         onNext={handleCheckOrNext}
       />
-
-      {/* Modal Drawer for full question list */}
-      {showNavigator && (
-        <div className="dialog-backdrop" onClick={() => setShowNavigator(false)}>
-          <div className="question-matrix-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="matrix-modal-header">
-              <h3>Danh sách câu hỏi ({items.length} câu)</h3>
-              <button className="dialog-close" onClick={() => setShowNavigator(false)}>×</button>
-            </div>
-            <div className="matrix-modal-legend">
-              <span className="legend-item"><i className="legend-chip current"></i> Đang xem</span>
-              <span className="legend-item"><i className="legend-chip correct"></i> Đúng</span>
-              <span className="legend-item"><i className="legend-chip wrong"></i> Sai</span>
-              <span className="legend-item"><i className="legend-chip"></i> Chưa làm</span>
-            </div>
-            <div className="matrix-modal-grid">
-              {items.map((q, idx) => {
-                const ans = selectedAnswers[q.id]
-                const isCurrent = idx === currentIndex
-                const isCorrect = ans?.answered && ans?.correct
-                const isWrong = ans?.answered && !ans?.correct
-                return (
-                  <button
-                    key={q.id}
-                    className={`matrix-grid-btn ${isCurrent ? 'current' : ''} ${isCorrect ? 'correct' : ''} ${isWrong ? 'wrong' : ''}`}
-                    onClick={() => {
-                      goToIndex(idx)
-                      setShowNavigator(false)
-                    }}
-                  >
-                    <span className="q-number">{idx + 1}</span>
-                    {q.critical && <span className="q-critical-dot" title="Câu điểm liệt">★</span>}
-                  </button>
-                )
-              })}
-            </div>
-            <div className="matrix-modal-footer">
-              <button className="outline-button" onClick={handleRestart}>Làm lại nhóm từ đầu</button>
-              <button className="primary-button" onClick={() => setShowNavigator(false)}>Đóng</button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   )
 }
