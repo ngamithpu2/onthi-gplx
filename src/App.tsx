@@ -253,7 +253,7 @@ function Home({
   }).length
   const weakCount = questions.filter((question) => {
     const item = state.progress[question.id]
-    return Boolean(item?.seen && (item.lastResult === 'wrong' || item.markedUnsure))
+    return Boolean(item && item.lastResult === 'wrong')
   }).length
   const chapters = [...new Set(questions.map((question) => question.chapter))]
 
@@ -290,9 +290,9 @@ function Home({
           <button className="quick-card" onClick={() => onStart('weak')}>
             <div>
               <strong>Câu hay làm sai</strong>
-              <small>{weakCount} câu cần rèn luyện thêm</small>
+              <small>{weakCount > 0 ? `${weakCount} câu cần ôn luyện lại` : 'Không có câu sai nào'}</small>
             </div>
-            <span className="arrow-text">Vào học</span>
+            <span className="arrow-text">{weakCount > 0 ? 'Vào học' : 'Luyện tập'}</span>
           </button>
           <button className="quick-card" onClick={() => onStart('critical')}>
             <div>
@@ -1227,18 +1227,24 @@ export default function App() {
     } else {
       queue = selectModeQuestions(mode, questions, state.progress)
     }
+
+    if (mode === 'weak' && queue.length === 0) {
+      alert('🎉 Tuyệt vời! Hiện tại bạn không có câu nào bị làm sai. Hãy tiếp tục luyện tập các nhóm kiến thức hoặc thi thử nhé!')
+      return
+    }
+
     if (!queue.length) {
       queue = buildTodayQueue(questions, state.progress)
     }
     const seenCount = queue.filter(
       (question) => (state.progress[question.id]?.seen ?? 0) > 0,
     ).length
-    const initialIdx = Math.min(seenCount, queue.length - 1)
+    const initialIdx = mode === 'weak' ? 0 : Math.min(seenCount, queue.length - 1)
 
     const titles: Record<Exclude<StudyMode, 'exam'>, string> = {
       today: 'Kế hoạch ôn tập',
       all: `Toàn bộ ${questions.length} câu`,
-      weak: 'Củng cố câu hay làm sai',
+      weak: `Ôn luyện câu làm sai (${queue.length} câu)`,
       critical: 'Câu trọng yếu (Điểm liệt)',
     }
     setStudyQueue(queue)
