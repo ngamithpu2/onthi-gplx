@@ -310,7 +310,7 @@ function Home({
             <div>
               <h2>Các nhóm kiến thức</h2>
             </div>
-            <span>{readiness.seen}/{questions.length} câu</span>
+            <span>{readiness.seen}/{questions.length} câu ({readiness.score}%)</span>
           </div>
           <div className="chapter-list">
             {chapters.map((chapter) => {
@@ -319,7 +319,7 @@ function Home({
                 (question) => (state.progress[question.id]?.seen ?? 0) > 0,
               ).length
               const remainingCount = Math.max(0, chapterQuestions.length - seenCount)
-              const percentLearned = Math.round((seenCount / chapterQuestions.length) * 100)
+              const percentLearned = Math.min(100, Math.max(0, Math.round((seenCount / chapterQuestions.length) * 100)))
               const isComplete = percentLearned === 100
               const nextQuestionNum = Math.min(seenCount + 1, chapterQuestions.length)
 
@@ -520,10 +520,12 @@ function Study({
   const [index, setIndex] = useState(() => Math.min(Math.max(0, initialIndex), Math.max(0, queue.length - 1)))
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, { selected: number; answered: boolean; correct: boolean }>>({})
   const [unsureMap, setUnsureMap] = useState<Record<number, boolean>>({})
+  const [isCompleted, setIsCompleted] = useState(false)
   const startedAt = useRef(Date.now())
 
   useEffect(() => {
     setIndex(Math.min(Math.max(0, initialIndex), Math.max(0, queue.length - 1)))
+    setIsCompleted(false)
   }, [initialIndex])
 
   const currentIndex = Math.min(Math.max(0, index), items.length - 1)
@@ -623,28 +625,31 @@ function Study({
 
     if (currentIndex < items.length - 1) {
       goToIndex(currentIndex + 1)
+    } else {
+      setIsCompleted(true)
     }
   }
 
   const handleRestart = () => {
     if (window.confirm('Bạn có muốn học lại phần này từ câu đầu tiên không?')) {
       setSelectedAnswers({})
+      setIsCompleted(false)
       goToIndex(0)
     }
   }
 
-  if (!question) {
+  if (!question || isCompleted) {
     return (
       <main className="center-page">
         <div className="completion-card">
           <span className="eyebrow">Chúc mừng</span>
-          <h1>Hoàn thành phiên học</h1>
+          <h1>Hoàn thành nhóm kiến thức</h1>
           <p style={{ margin: '12px 0 24px', color: 'var(--text-muted)' }}>
-            Bạn đã hoàn thành toàn bộ {items.length} câu hỏi trong phiên học này.
+            Bạn đã hoàn thành toàn bộ {items.length} câu hỏi trong phần này.
           </p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
             <button className="outline-button" onClick={handleRestart}>Học lại từ đầu</button>
-            <button className="primary-button" onClick={onExit}>Về trang tổng quan</button>
+            <button className="primary-button" onClick={onExit}>Hoàn thành & Về trang chủ</button>
           </div>
         </div>
       </main>

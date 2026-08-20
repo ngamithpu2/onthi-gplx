@@ -174,15 +174,12 @@ export function getReadiness(
   questions: Question[],
   progress: Record<number, QuestionProgress>,
 ) {
-  const seen = questions.filter((question) => progress[question.id]?.seen).length
+  const seen = questions.filter((question) => (progress[question.id]?.seen ?? 0) > 0).length
   const mastered = questions.filter((question) => (progress[question.id]?.mastery ?? 0) >= 3).length
   const critical = questions.filter((question) => question.critical)
   const criticalMastered = critical.filter(
     (question) => (progress[question.id]?.mastery ?? 0) >= 3,
   ).length
-  const coverage = seen / questions.length
-  const mastery = mastered / questions.length
-  const criticalScore = critical.length ? criticalMastered / critical.length : 1
-  const score = Math.round((coverage * 0.35 + mastery * 0.45 + criticalScore * 0.2) * 100)
+  const score = questions.length > 0 ? Math.min(100, Math.max(0, Math.round((seen / questions.length) * 100))) : 0
   return { score, seen, mastered, criticalMastered, criticalTotal: critical.length }
 }
