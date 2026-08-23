@@ -67,8 +67,8 @@ function Portal({
   const [clockStr, setClockStr] = useState({ day: 'Hôm nay', text: '' })
 
   // Calculate live readiness for Traffic Safety module
-  const readiness = getReadiness(questions, state.progress)
-  const trafficPercent = Math.min(100, Math.max(0, Math.round((readiness.seen / questions.length) * 100)))
+  const readiness = getReadiness(questions, state?.progress || {})
+  const trafficPercent = Math.min(100, Math.max(0, Math.round(((readiness?.seen || 0) / questions.length) * 100)))
 
   // Clock updater
   useEffect(() => {
@@ -758,9 +758,9 @@ function TrafficSafetyHub({
   onStartChapter: (chapter: string) => void
   onStartExam: (questionCount: number, durationMinutes: number) => void
 }) {
-  const readiness = getReadiness(questions, state.progress)
+  const readiness = getReadiness(questions, state?.progress || {})
   const weakCount = questions.filter((question) => {
-    const item = state.progress[question.id]
+    const item = state?.progress?.[question.id]
     return Boolean(item && item.lastResult === 'wrong')
   }).length
   const chapters = [...new Set(questions.map((question) => question.chapter))]
@@ -793,15 +793,15 @@ function TrafficSafetyHub({
           </div>
 
           <div className="readiness-card">
-            <div className="progress-ring" style={{ '--score': `${readiness.score * 3.6}deg` } as React.CSSProperties}>
+            <div className="progress-ring" style={{ '--score': `${(readiness?.score || 0) * 3.6}deg` } as React.CSSProperties}>
               <div>
-                <strong>{readiness.score}%</strong>
+                <strong>{readiness?.score || 0}%</strong>
                 <span>Đã học</span>
               </div>
             </div>
             <div className="readiness-details">
               <h3>Độ sẵn sàng</h3>
-              <p>Đã học {readiness.seen}/{questions.length} câu hỏi trong chương trình</p>
+              <p>Đã học {readiness?.seen || 0}/{questions.length} câu hỏi trong chương trình</p>
             </div>
           </div>
         </section>
@@ -828,7 +828,7 @@ function TrafficSafetyHub({
             <button className="quick-card" onClick={() => onStart('critical')}>
               <div>
                 <strong>Câu trọng yếu (Điểm liệt)</strong>
-                <small>{readiness.criticalMastered}/{readiness.criticalTotal} câu đã vững</small>
+                <small>{readiness?.criticalMastered || 0}/{readiness?.criticalTotal || 0} câu đã vững</small>
               </div>
               <span className="arrow-text">Vào học →</span>
             </button>
@@ -842,14 +842,14 @@ function TrafficSafetyHub({
                 <h2>Các nhóm kiến thức</h2>
               </div>
               <span style={{ fontSize: '12.5px', color: 'var(--ink-soft)', fontFamily: 'var(--font-mono)' }}>
-                {readiness.seen}/{questions.length} câu ({readiness.score}%)
+                {readiness?.seen || 0}/{questions.length} câu ({readiness?.score || 0}%)
               </span>
             </div>
             <div className="chapter-list">
               {chapters.map((chapter) => {
                 const chapterQuestions = questions.filter((question) => question.chapter === chapter)
                 const seenCount = chapterQuestions.filter(
-                  (question) => (state.progress[question.id]?.seen ?? 0) > 0,
+                  (question) => (state?.progress?.[question.id]?.seen ?? 0) > 0,
                 ).length
                 const remainingCount = Math.max(0, chapterQuestions.length - seenCount)
                 const percentLearned = Math.min(100, Math.max(0, Math.round((seenCount / chapterQuestions.length) * 100)))
@@ -913,7 +913,7 @@ function TrafficSafetyHub({
               </div>
               <div className="exam-summary-item">
                 <span>Lượt đã thi</span>
-                <strong>{state.attempts.length} lượt</strong>
+                <strong>{(state?.attempts || []).length} lượt</strong>
               </div>
             </div>
 
