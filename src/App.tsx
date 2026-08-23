@@ -64,692 +64,522 @@ function Portal({
   onReadArticle: (article: NewsArticle) => void
   onShowToast: (msg?: string) => void
 }) {
-  const [newsMonth, setNewsMonth] = useState<string>('all')
-  const [practiceTab, setPracticeTab] = useState<'luyen-tap' | 'hoc-tap'>('luyen-tap')
+  const [practiceTab, setPracticeTab] = useState<'pane-practice' | 'pane-theory'>('pane-practice')
   const [searchQuery, setSearchQuery] = useState('')
-  const [bannerVisible, setBannerVisible] = useState(true)
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [clockStr, setClockStr] = useState({ day: 'Hôm nay', text: '' })
+  const [clockStr, setClockStr] = useState('')
 
   // Calculate live readiness for Traffic Safety module
   const readiness = getReadiness(questions, state?.progress || {})
   const trafficPercent = Math.min(100, Math.max(0, Math.round(((readiness?.seen || 0) / questions.length) * 100)))
 
-  // Clock updater
+  // Tactical Clock updater
   useEffect(() => {
     function updateClock() {
       const now = new Date()
-      const days = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy']
-      const dd = String(now.getDate()).padStart(2, '0')
-      const mm = String(now.getMonth() + 1).padStart(2, '0')
-      const yyyy = now.getFullYear()
-      const hh = String(now.getHours()).padStart(2, '0')
+      const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy']
+      const d = String(now.getDate()).padStart(2, '0')
+      const m = String(now.getMonth() + 1).padStart(2, '0')
+      const y = now.getFullYear()
+      const h = String(now.getHours()).padStart(2, '0')
       const min = String(now.getMinutes()).padStart(2, '0')
-      setClockStr({
-        day: days[now.getDay()],
-        text: ` · ${dd}/${mm}/${yyyy} · ${hh}:${min}`,
-      })
+      const sec = String(now.getSeconds()).padStart(2, '0')
+      setClockStr(`${days[now.getDay()]}, ${d}/${m}/${y} — ${h}:${min}:${sec}`)
     }
     updateClock()
-    const timer = setInterval(updateClock, 10000)
+    const timer = setInterval(updateClock, 1000)
     return () => clearInterval(timer)
   }, [])
 
   const qLower = searchQuery.trim().toLowerCase()
   const matchSearch = (text: string) => qLower === '' || text.toLowerCase().includes(qLower)
 
-  const newsItems = [
-    {
-      id: K602_FEATURED_ARTICLE.id,
-      month: K602_FEATURED_ARTICLE.month,
-      date: K602_FEATURED_ARTICLE.date,
-      unit: K602_FEATURED_ARTICLE.unit,
-      tag: K602_FEATURED_ARTICLE.tag,
-      tagLabel: K602_FEATURED_ARTICLE.tagLabel,
-      title: K602_FEATURED_ARTICLE.title,
-      desc: K602_FEATURED_ARTICLE.summary,
-      search: K602_FEATURED_ARTICLE.title + ' ' + K602_FEATURED_ARTICLE.unit + ' huân chương bảo vệ tổ quốc 60 năm',
-      image: K602_FEATURED_ARTICLE.heroImage,
-      articleData: K602_FEATURED_ARTICLE,
-    },
-    {
-      id: 'n1',
-      month: '2026-08',
-      date: '15/08/2026',
-      unit: 'Ban Tham mưu',
-      tag: 'thongbao' as const,
-      tagLabel: 'Thông báo',
-      title: 'Lịch kiểm tra chuyên đề An toàn kho tàng — tháng 9',
-      desc: 'Thông báo thời gian, hình thức kiểm tra chuyên đề An toàn kho tàng dành cho toàn thể quân nhân đơn vị.',
-      search: 'thông báo lịch kiểm tra chuyên đề an toàn kho tháng 9',
-      thumbClass: 'ph-gold',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6">
-          <rect x="6" y="3" width="12" height="18" rx="1.5" />
-          <path d="M9 8h6M9 12h6M9 16h3" />
-        </svg>
-      ),
-    },
-    {
-      id: 'n2',
-      month: '2026-08',
-      date: '02/08/2026',
-      unit: 'Ban Kỹ thuật',
-      tag: 'hoatdong' as const,
-      tagLabel: 'Hoạt động',
-      title: 'Tổng kết công tác bảo quản trang bị 6 tháng đầu năm',
-      desc: 'Đánh giá kết quả thực hiện nhiệm vụ bảo quản, bảo dưỡng trang bị 6 tháng đầu năm và phương hướng thời gian tới.',
-      search: 'tổng kết công tác bảo quản trang bị 6 tháng đầu năm',
-      thumbClass: 'ph-red',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
-        </svg>
-      ),
-    },
-    {
-      id: 'n3',
-      month: '2026-07',
-      date: '28/07/2026',
-      unit: 'Ban Hậu cần',
-      tag: 'huanluyen' as const,
-      tagLabel: 'Huấn luyện',
-      title: 'Tập huấn nghiệp vụ phòng cháy, chữa cháy',
-      desc: 'Tổ chức tập huấn, thực hành phương án chữa cháy tại các khu vực kho theo kế hoạch huấn luyện năm.',
-      search: 'tập huấn nghiệp vụ phòng cháy chữa cháy pccc',
-      thumbClass: 'ph-green',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6">
-          <path d="M12 3c3 3 4 5 4 8a4 4 0 1 1-8 0c0-3 1-5 4-8z" />
-        </svg>
-      ),
-    },
-    {
-      id: 'n4',
-      month: '2026-07',
-      date: '10/07/2026',
-      unit: 'Ban Chính trị',
-      tag: 'huanluyen' as const,
-      tagLabel: 'Huấn luyện',
-      title: 'Triển khai học tập chuyên đề chính trị quý III',
-      desc: 'Quán triệt nội dung học tập chính trị quý III tới toàn thể cán bộ, quân nhân chuyên nghiệp, chiến sĩ.',
-      search: 'triển khai học tập chuyên đề chính trị quý III',
-      thumbClass: 'ph-green',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6">
-          <path d="M4 5h9v14H4zM13 8h7v11h-7" />
-          <path d="M6.5 9h4M6.5 12h4M6.5 15h4" />
-        </svg>
-      ),
-    },
-    {
-      id: 'n5',
-      month: '2026-06',
-      date: '05/06/2026',
-      unit: 'Ban Tham mưu',
-      tag: 'thongbao' as const,
-      tagLabel: 'Thông báo',
-      title: 'Kiểm tra định kỳ công tác quản lý kho',
-      desc: 'Thông báo kế hoạch kiểm tra định kỳ công tác quản lý, sổ sách và nghiệp vụ kho quý II.',
-      search: 'kiểm tra định kỳ công tác quản lý kho',
-      thumbClass: 'ph-gold',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6">
-          <path d="M3 8h5l2-3h4l2 3h5v11H3z" />
-          <path d="M3 8l2 11M21 8l-2 11" />
-        </svg>
-      ),
-    },
-  ]
-
-  const filteredNews = newsItems.filter(
-    (item) => (newsMonth === 'all' || item.month === newsMonth) && matchSearch(item.search),
-  )
-
   const libraryTopics = [
-    { code: 'TV-01', title: 'An toàn kho tàng', desc: 'Quy định, quy trình bảo đảm an toàn trong khu vực kho.', search: 'an toàn kho tàng', status: 'Đang cập nhật' },
-    { code: 'TV-02', title: 'Phòng cháy, chữa cháy', desc: 'Tài liệu nghiệp vụ, phương án và quy trình xử lý tình huống cháy nổ.', search: 'phòng cháy chữa cháy pccc', status: 'Đang cập nhật' },
-    { code: 'TV-03', title: 'Nghiệp vụ xuất – nhập kho', desc: 'Quy trình tiếp nhận, cấp phát, luân chuyển hàng hoá trong kho.', search: 'nghiệp vụ xuất nhập kho', status: 'Đang cập nhật' },
-    { code: 'TV-04', title: 'Bảo quản, bảo dưỡng trang bị', desc: 'Hướng dẫn kỹ thuật bảo quản định kỳ theo mùa và theo chu kỳ.', search: 'bảo quản bảo dưỡng trang bị', status: 'Đang cập nhật' },
-    { code: 'TV-05', title: 'Điều lệnh, điều lệ quân đội', desc: 'Hệ thống điều lệnh đội ngũ và điều lệ quản lý bộ đội.', search: 'điều lệnh điều lệ quân đội', status: 'Đang cập nhật' },
-    { code: 'TV-06', title: 'Chính trị, tư tưởng', desc: 'Tài liệu học tập chính trị, giáo dục truyền thống đơn vị.', search: 'chính trị tư tưởng', status: 'Đang cập nhật' },
-    { code: 'TV-07', title: 'Pháp luật Nhà nước & Quân đội', desc: 'Văn bản pháp luật liên quan đến chức năng, nhiệm vụ của đơn vị.', search: 'pháp luật nhà nước quân đội', status: 'Đang cập nhật' },
-    { code: 'TV-08', title: 'Kỹ năng nghiệp vụ chuyên môn', desc: 'Tài liệu bổ trợ kỹ năng theo từng vị trí công tác trong kho.', search: 'kỹ năng nghiệp vụ chuyên môn', status: 'Đang cập nhật' },
+    { code: 'TV-01', title: 'An toàn kho tàng', desc: 'Quy chuẩn, quy trình bảo đảm an toàn vũ khí, khí tài, đạn dược và phòng ngừa sự cố kỹ thuật.', search: 'an toan kho tang phong ngua su co' },
+    { code: 'TV-02', title: 'Phòng cháy, chữa cháy', desc: 'Phương án tác chiến PCCC, kỹ thuật sử dụng trang bị cứu hỏa và cứu nạn tại chỗ trong doanh trại.', search: 'phong chay chua chay pccc cuu ho' },
+    { code: 'TV-03', title: 'Nghiệp vụ xuất – nhập', desc: 'Quy trình giao nhận, thủ tục cấp phát, chế độ kiểm kê và ghi chép sổ sách kế toán quản lý vật tư.', search: 'nghiep vu xuat nhap kho so sach' },
+    { code: 'TV-04', title: 'Bảo quản, bảo dưỡng', desc: 'Quy trình kỹ thuật bảo quản thường xuyên, định kỳ theo mùa và quy chuẩn niêm cất trang bị kỹ thuật.', search: 'bao quan bao duong niem cat trang bi vktbkt' },
+    { code: 'TV-05', title: 'Điều lệnh & Chế độ', desc: 'Hệ thống Điều lệnh Quản lý bộ đội, Điều lệnh Đội ngũ và các quy định xây dựng nền nếp chính quy.', search: 'dieu lenh quan ly bo doi doi ngu' },
+    { code: 'TV-06', title: 'Chính trị – Tư tưởng', desc: 'Tài liệu học tập chính trị, định hướng tư tưởng và giáo dục truyền thống vẻ vang của Tổng cục.', search: 'chinh tri tu tuong giao duc truyen thong' },
     {
-      code: 'TV-09',
+      code: 'TV-07',
       title: 'An toàn giao thông đường bộ',
-      desc: 'Bộ 150 câu hỏi trắc nghiệm Luật trật tự an toàn giao thông đường bộ & sát hạch lái xe A1.',
-      search: 'an toàn giao thông đường bộ gplx a1 xe máy',
-      status: 'Sẵn sàng học',
+      desc: 'Bộ 150 câu hỏi trắc nghiệm Luật Trật tự an toàn giao thông đường bộ & sát hạch lái xe A1.',
+      search: 'an toan giao thong duong bo gplx a1 xe may luat',
       isTraffic: true,
     },
   ]
 
   const practiceItems = [
-    { code: 'LT-01', title: 'An toàn kho tàng', desc: '4 bài luyện tập trắc nghiệm tình huống.', search: 'an toàn kho tàng', progress: 0, status: 'Chưa bắt đầu' },
-    { code: 'LT-02', title: 'Phòng cháy, chữa cháy', desc: '3 bài luyện tập xử lý tình huống.', search: 'phòng cháy chữa cháy pccc', progress: 0, status: 'Chưa bắt đầu' },
-    { code: 'LT-03', title: 'Nghiệp vụ xuất – nhập kho', desc: '5 bài luyện tập quy trình nghiệp vụ.', search: 'nghiệp vụ xuất nhập kho', progress: 0, status: 'Chưa bắt đầu' },
-    { code: 'LT-04', title: 'Bảo quản, bảo dưỡng trang bị', desc: '4 bài luyện tập nhận diện quy trình.', search: 'bảo quản bảo dưỡng trang bị', progress: 0, status: 'Chưa bắt đầu' },
-    { code: 'LT-05', title: 'Điều lệnh, điều lệ quân đội', desc: '4 bài luyện tập lý thuyết.', search: 'điều lệnh điều lệ', progress: 0, status: 'Chưa bắt đầu' },
-    { code: 'LT-06', title: 'Chính trị, tư tưởng', desc: '4 bài luyện tập nhận thức chuyên đề.', search: 'chính trị tư tưởng', progress: 0, status: 'Chưa bắt đầu' },
+    { code: 'LT-01', title: 'Luyện tập: An toàn kho tàng', desc: 'Bộ câu hỏi tình huống xử lý an toàn lao động và bảo đảm kỹ thuật kho quân khí.', tag: '4 Bài tập', search: 'an toan kho tang' },
+    { code: 'LT-02', title: 'Luyện tập: Xử lý sự cố PCCC', desc: 'Thực hành báo động, triển khai đội hình ứng cứu và thao tác phương tiện chữa cháy tại chỗ.', tag: '3 Tình huống', search: 'phong chay chua chay pccc' },
+    { code: 'LT-03', title: 'Luyện tập: Thủ tục Xuất – Nhập', desc: 'Kiểm tra quy cách niêm phong, kiểm đếm thực tế và xử lý chứng từ quân nhu, quân giới.', tag: '5 Tình huống', search: 'xuat nhap kho chung tu' },
+    { code: 'LT-04', title: 'Luyện tập: Ngày Kỹ thuật', desc: 'Quy trình kiểm tra thông số kỹ thuật, lau chùi, tra dầu mỡ bảo dưỡng vũ khí, trang bị.', tag: '4 Bài tập', search: 'ngay ky thuat bao duong' },
     {
       code: 'LT-07',
-      title: 'An toàn giao thông đường bộ',
-      desc: `Luyện tập 150 câu hỏi lý thuyết sát hạch lái xe A1 (${readiness.seen}/150 câu đã học).`,
-      search: 'an toàn giao thông đường bộ gplx a1',
-      progress: trafficPercent,
-      status: trafficPercent === 100 ? 'Đã hoàn thành' : trafficPercent > 0 ? `${trafficPercent}% đã học` : 'Sẵn sàng',
+      title: 'Luyện tập: An toàn giao thông A1',
+      desc: `Luyện tập 150 câu hỏi lý thuyết sát hạch lái xe A1 (${readiness.seen}/150 câu đã học - ${trafficPercent}% hoàn thành).`,
+      tag: '150 Câu hỏi',
+      search: 'an toan giao thong a1 lai xe',
       isTraffic: true,
     },
   ]
 
-  const learningItems = [
-    { code: 'HT-01', title: 'An toàn kho tàng', desc: '6 bài học lý thuyết kèm hình ảnh minh hoạ.', search: 'an toàn kho tàng', progress: 0, status: 'Chưa bắt đầu' },
-    { code: 'HT-02', title: 'Phòng cháy, chữa cháy', desc: '5 bài học quy trình và phương án xử lý.', search: 'phòng cháy chữa cháy pccc', progress: 0, status: 'Chưa bắt đầu' },
-    { code: 'HT-03', title: 'Nghiệp vụ xuất – nhập kho', desc: '7 bài học quy trình nghiệp vụ chi tiết.', search: 'nghiệp vụ xuất nhập kho', progress: 0, status: 'Chưa bắt đầu' },
-    { code: 'HT-04', title: 'Bảo quản, bảo dưỡng trang bị', desc: '6 bài học kỹ thuật theo chu kỳ bảo quản.', search: 'bảo quản bảo dưỡng trang bị', progress: 0, status: 'Chưa bắt đầu' },
-    { code: 'HT-05', title: 'Điều lệnh, điều lệ quân đội', desc: '5 bài học điều lệnh đội ngũ cơ bản.', search: 'điều lệnh điều lệ', progress: 0, status: 'Chưa bắt đầu' },
-    { code: 'HT-06', title: 'Chính trị, tư tưởng', desc: '5 bài học chuyên đề chính trị theo quý.', search: 'chính trị tư tưởng', progress: 0, status: 'Chưa bắt đầu' },
+  const theoryItems = [
+    { code: 'GT-01', title: 'Giáo trình: Kỹ thuật đạn dược', desc: 'Hệ thống thông gió, kiểm soát nhiệt ẩm, chống sét và tiêu chuẩn an toàn kho quân khí.', tag: '6 Chuyên đề', search: 'ky thuat dan duoc' },
+    { code: 'GT-02', title: 'Giáo trình: Sổ sách kế toán kho', desc: 'Hệ thống mẫu biểu nghiệp vụ, sổ theo dõi trang bị kỹ thuật theo quy định mới nhất.', tag: '4 Chuyên đề', search: 'so sach ke toan kho' },
     {
-      code: 'HT-07',
-      title: 'An toàn giao thông đường bộ',
-      desc: 'Học tập 6 nhóm kiến thức pháp luật và kỹ thuật lái xe an toàn.',
-      search: 'an toàn giao thông đường bộ học tập',
-      progress: trafficPercent,
-      status: trafficPercent === 100 ? 'Đã hoàn thành' : trafficPercent > 0 ? `${trafficPercent}% đã học` : 'Sẵn sàng',
+      code: 'GT-07',
+      title: 'Giáo trình: Luật Giao thông đường bộ',
+      desc: 'Hệ thống quy tắc giao thông, biển báo hiệu đường bộ và kỹ năng xử lý tình huống an toàn.',
+      tag: '6 Nhóm kiến thức',
+      search: 'luat giao thong bien bao',
       isTraffic: true,
     },
   ]
 
-  const testListItems = [
-    { code: 'KT-01', title: 'An toàn kho tàng', questionsCount: '20 câu', duration: '30 phút', difficulty: 'basic', diffLabel: 'Cơ bản', search: 'an toàn kho tàng kiểm tra' },
-    { code: 'KT-02', title: 'Phòng cháy, chữa cháy', questionsCount: '15 câu', duration: '25 phút', difficulty: 'basic', diffLabel: 'Cơ bản', search: 'phòng cháy chữa cháy pccc kiểm tra' },
-    { code: 'KT-03', title: 'Nghiệp vụ xuất – nhập kho', questionsCount: '25 câu', duration: '40 phút', difficulty: 'adv', diffLabel: 'Nâng cao', search: 'nghiệp vụ xuất nhập kho kiểm tra' },
-    { code: 'KT-04', title: 'Bảo quản, bảo dưỡng trang bị', questionsCount: '20 câu', duration: '30 phút', difficulty: 'adv', diffLabel: 'Nâng cao', search: 'bảo quản bảo dưỡng trang bị kiểm tra' },
-    { code: 'KT-05', title: 'Điều lệnh, điều lệ quân đội', questionsCount: '15 câu', duration: '20 phút', difficulty: 'basic', diffLabel: 'Cơ bản', search: 'điều lệnh điều lệ kiểm tra' },
-    { code: 'KT-06', title: 'Chính trị, tư tưởng', questionsCount: '20 câu', duration: '30 phút', difficulty: 'basic', diffLabel: 'Cơ bản', search: 'chính trị tư tưởng kiểm tra' },
+  const examListItems = [
+    {
+      code: 'KT-01',
+      title: 'Kiểm tra Chuyên đề An toàn kho tàng',
+      duration: 'Thời lượng: 30 phút',
+      scope: 'Quy mô: 25 câu trắc nghiệm',
+      target: 'Đối tượng: Thủ kho, nhân viên kỹ thuật',
+      search: 'an toan kho tang kiem tra',
+    },
+    {
+      code: 'KT-02',
+      title: 'Kiểm tra Nghiệp vụ Phòng cháy & Chữa cháy',
+      duration: 'Thời lượng: 25 phút',
+      scope: 'Quy mô: 20 câu hỏi',
+      target: 'Đối tượng: Toàn thể quân nhân',
+      search: 'phong chay chua chay pccc kiem tra',
+    },
+    {
+      code: 'KT-03',
+      title: 'Kiểm tra Nhận thức Điều lệnh Quản lý bộ đội',
+      duration: 'Thời lượng: 20 phút',
+      scope: 'Quy mô: 20 câu trắc nghiệm',
+      target: 'Đối tượng: Sĩ quan, QNCN, Hạ sĩ quan - Binh sĩ',
+      search: 'dieu lenh quan ly bo doi kiem tra',
+    },
     {
       code: 'KT-07',
-      title: 'Chuyên đề: An toàn giao thông đường bộ',
-      questionsCount: '50 câu',
-      duration: '30 phút',
-      difficulty: 'official',
-      diffLabel: 'Sát hạch',
-      search: 'an toàn giao thông đường bộ sát hạch 50 câu 30 phút',
+      title: 'Sát hạch Chuyên đề: An toàn giao thông đường bộ',
+      duration: 'Thời lượng: 30 phút',
+      scope: 'Quy mô: 50 câu trắc nghiệm',
+      target: 'Đối tượng: Toàn thể quân nhân sát hạch A1',
+      search: 'an toan giao thong sat hach 50 cau',
       isTraffic: true,
     },
   ]
-
-  const filteredTests = testListItems.filter((t) => matchSearch(t.search))
 
   return (
     <>
-      {/* DEMO NOTICE BANNER */}
-      {bannerVisible && (
-        <div className="demo-banner">
-          <span>
-            🛈 <strong>Bản dựng giao diện để duyệt bố cục</strong> — danh mục chuyên đề, bài luyện tập, đề kiểm tra và tin tức hiện là dữ liệu minh hoạ, sẽ thay bằng nội dung chính thức sau khi thống nhất.
-          </span>
-          <button onClick={() => setBannerVisible(false)} aria-label="Đóng thông báo">×</button>
+      {/* KHỐI HEADER TRỐNG ĐỒNG BỘ ĐỘI */}
+      <header className="header-wrapper">
+        <div className="top-strip">
+          <div className="container">
+            <div className="motto-tag">KỶ LUẬT LÀ SỨC MẠNH CỦA QUÂN ĐỘI</div>
+            <div className="tradition-motto"><span>ĐOÀN KẾT · ANH DŨNG · SÁNG TẠO · VƯỢT KHÓ</span></div>
+            <div className="live-time">{clockStr}</div>
+          </div>
         </div>
-      )}
 
-      {/* TOPBAR */}
-      <header className="topbar">
-        <div className="container">
-          <div className="brand">
-            <div className="brand-emblem">
-              <svg viewBox="0 0 100 100">
-                <polygon points="50,6 61,36 94,36 67,55 78,90 50,70 22,90 33,55 6,36 39,36" fill="#E4C876" />
-              </svg>
-            </div>
-            <div className="brand-text">
-              <div className="name">KHO K602</div>
-              <div className="org">Tổng cục Công nghiệp Quốc phòng</div>
-              <div className="addr">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" />
-                  <circle cx="12" cy="10" r="2.5" />
-                </svg>
-                Phường Vạn Xuân, tỉnh Thái Nguyên
+        <div className="brand-bar">
+          <div className="container">
+            <div className="brand-profile" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <div className="insignia" title="Quân kỳ QĐND Việt Nam">
+                <svg viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 16.5,13.5 18.5,21 12,16.5 5.5,21 7.5,13.5 2,9 9,9"/></svg>
+              </div>
+              <div className="brand-meta">
+                <h1>KHO K602</h1>
+                <div className="sub-org">Tổng cục Công nghiệp Quốc phòng</div>
               </div>
             </div>
-          </div>
-
-          <div className="topbar-right">
-            <div className="clock">
-              <span className="day">{clockStr.day}</span>
-              {clockStr.text}
-            </div>
-            <div className="search-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="7" />
-                <path d="M21 21l-4.3-4.3" />
-              </svg>
+            <div className="quick-search">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm chuyên đề, bài luyện tập, đề kiểm tra…"
+                placeholder="Tra cứu chuyên đề, tài liệu, bài thi..."
               />
             </div>
-            <button
-              className="hamburger"
-              onClick={() => setMobileNavOpen(!mobileNavOpen)}
-              aria-label="Mở menu điều hướng"
-            >
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
           </div>
         </div>
       </header>
 
-      {/* MAIN NAV */}
-      <nav className="mainnav">
+      {/* MENU ĐIỀU HƯỚNG CHÍNH QUY */}
+      <nav className="main-nav">
         <div className="container">
-          <div className={`nav-panel ${mobileNavOpen ? 'open' : ''}`}>
-            <ul>
-              <li>
-                <a href="#trang-chu" onClick={() => setMobileNavOpen(false)} className="active">
-                  <span className="code">TC</span>Trang chủ
-                </a>
-              </li>
-              <li>
-                <a href="#tin-tuc" onClick={() => setMobileNavOpen(false)}>
-                  <span className="code">TT</span>Tin tức
-                </a>
-              </li>
-              <li>
-                <a href="#thu-vien" onClick={() => setMobileNavOpen(false)}>
-                  <span className="code">TV</span>Thư viện kho
-                </a>
-              </li>
-              <li>
-                <a href="#hoc-tap" onClick={() => setMobileNavOpen(false)}>
-                  <span className="code">HT</span>Luyện tập &amp; Học tập
-                </a>
-              </li>
-              <li>
-                <a href="#kiem-tra" onClick={() => setMobileNavOpen(false)}>
-                  <span className="code">KT</span>Kiểm tra
-                </a>
-              </li>
-              <li>
-                <a href="#gioi-thieu" onClick={() => setMobileNavOpen(false)}>
-                  <span className="code">GT</span>Giới thiệu
-                </a>
-              </li>
-            </ul>
-          </div>
+          <ul>
+            <li><a href="#trang-chu" className="active">Trang chủ</a></li>
+            <li><a href="#tin-tuc">Tin tức &amp; Mệnh lệnh</a></li>
+            <li><a href="#thu-vien">Thư viện nghiệp vụ</a></li>
+            <li><a href="#hoc-tap">Luyện tập &amp; Bồi dưỡng</a></li>
+            <li><a href="#kiem-tra">Kiểm tra đánh giá</a></li>
+            <li><a href="#gioi-thieu">Giới thiệu đơn vị</a></li>
+          </ul>
         </div>
       </nav>
 
       <main>
-        {/* HERO */}
-        <section className="hero" id="trang-chu">
+        {/* HERO QUẢN TRỊ */}
+        <section className="hero-block" id="trang-chu">
           <div className="container hero-grid">
-            <div className="hero-inner">
-              <div className="eyebrow">Cổng thông tin nội bộ đơn vị</div>
-              <h1>Thư viện, luyện tập &amp; kiểm tra <span>Kho K602</span></h1>
-              <p className="lead">
-                Nơi tra cứu tài liệu, ôn luyện và kiểm tra theo từng chuyên đề nghiệp vụ của đơn vị — sắp xếp theo mã mục lục để tìm nhanh, đúng nội dung cần dùng.
-              </p>
-              <div className="hero-actions">
-                <a href="#thu-vien" className="btn btn-primary">Xem thư viện kho</a>
-                <a href="#kiem-tra" className="btn btn-ghost">Vào phần kiểm tra</a>
-              </div>
-              <div className="stat-row">
-                <div className="stat-tag"><div className="num">9</div><div className="lbl">Chuyên đề khung</div></div>
-                <div className="stat-tag"><div className="num">24</div><div className="lbl">Bài luyện tập mẫu</div></div>
-                <div className="stat-tag"><div className="num">7</div><div className="lbl">Đề kiểm tra mẫu</div></div>
-                <div className="stat-tag"><div className="num">6</div><div className="lbl">Tin cập nhật gần đây</div></div>
+            <div className="hero-main-text">
+              <h2>Hệ thống quản trị kiến thức &amp; huấn luyện nghiệp vụ <span>Kho K602</span></h2>
+              <p>Cổng thông tin phục vụ công tác tra cứu quy trình, điều lệnh, kỹ thuật bảo quản trang bị và ôn luyện, kiểm tra nhận thức định kỳ của cán bộ, chiến sĩ và công nhân viên quốc phòng trong toàn đơn vị.</p>
+              
+              <div className="stats-strip">
+                <div className="stat-box">
+                  <div className="num">08</div>
+                  <div className="desc">Chuyên đề kho</div>
+                </div>
+                <div className="stat-box">
+                  <div className="num">24</div>
+                  <div className="desc">Bài luyện tập</div>
+                </div>
+                <div className="stat-box">
+                  <div className="num">06</div>
+                  <div className="desc">Đề kiểm tra</div>
+                </div>
+                <div className="stat-box">
+                  <div className="num">100%</div>
+                  <div className="desc">Chính quy hóa</div>
+                </div>
               </div>
             </div>
 
-            <aside className="news-widget">
-              <div className="news-widget-head">
-                <h3>Tin mới nhất</h3>
-                <span className="live-dot">Cập nhật</span>
+            {/* BẢNG MỆNH LỆNH & THÔNG TIN CHỈ ĐẠO */}
+            <aside className="directive-board">
+              <div className="directive-head">
+                <h3>Thông tin chỉ đạo &amp; Huấn luyện</h3>
+                <span className="badge-dispatch">Mới nhất</span>
               </div>
-              <div className="news-widget-list">
-                {newsItems.slice(0, 4).map((item) => (
-                  <div
-                    className="news-widget-item clickable"
-                    key={item.id}
-                    onClick={() => {
-                      if ('articleData' in item && item.articleData) {
-                        onReadArticle(item.articleData as NewsArticle)
-                      }
-                    }}
-                  >
-                    <div className="news-widget-thumb">
-                      {item.image ? (
-                        <img src={item.image} alt={item.title} className="news-real-img" />
-                      ) : (
-                        <div className={`photo-ph ${item.thumbClass}`}>{item.icon}</div>
-                      )}
-                    </div>
-                    <div>
-                      <h4>{item.title}</h4>
-                      <div className="wmeta">
-                        <span className="wtag">{item.tagLabel}</span>
-                        <span className="wdate">·</span>
-                        <span className="wdate">{item.date.slice(0, 5)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="news-widget-foot">
-                <a href="#tin-tuc">Xem tất cả tin tức →</a>
+              <div className="directive-body">
+                <div className="directive-row" onClick={() => onReadArticle(K602_FEATURED_ARTICLE)}>
+                  <h4>{K602_FEATURED_ARTICLE.title}</h4>
+                  <div className="meta">Ban Chính trị · 26/03/2025 · 837 lượt xem</div>
+                </div>
+                <div className="directive-row" onClick={() => onShowToast('Chức năng văn bản chỉ đạo đang được đồng bộ.')}>
+                  <h4>Kế hoạch hội thao huấn luyện chuyên môn kỹ thuật Quý III</h4>
+                  <div className="meta">Ban Tham mưu · 20/08/2026</div>
+                </div>
+                <div className="directive-row" onClick={() => onShowToast('Chức năng văn bản chỉ đạo đang được đồng bộ.')}>
+                  <h4>Kế hoạch kiểm tra công tác An toàn kho tàng và PCCC định kỳ</h4>
+                  <div className="meta">Ban Kỹ thuật · 15/08/2026</div>
+                </div>
+                <div className="directive-row" onClick={() => onShowToast('Chức năng văn bản chỉ đạo đang được đồng bộ.')}>
+                  <h4>Tổng kết công tác bảo quản, niêm cất trang bị kỹ thuật 6 tháng đầu năm</h4>
+                  <div className="meta">Ban Chính trị · 02/08/2026</div>
+                </div>
               </div>
             </aside>
           </div>
         </section>
 
-        {/* NEWS */}
-        <section className="section" id="tin-tuc">
+        {/* THƯ VIỆN NGHIỆP VỤ KHO */}
+        <section className="section-zone" id="thu-vien">
           <div className="container">
-            <div className="section-head">
-              <div>
-                <div className="eyebrow">Cập nhật theo ngày</div>
-                <h2>Tin tức đơn vị</h2>
-              </div>
-              <div className="section-note">Trang tin tức chính thức của đơn vị Kho K602 — Tổng cục Công nghiệp Quốc phòng.</div>
+            <div className="section-title-bar">
+              <h2>Thư viện nghiệp vụ kho</h2>
             </div>
 
-            <div className="filter-row">
-              {['all', '2025-03', '2026-08', '2026-07', '2026-06'].map((m) => (
-                <button
-                  key={m}
-                  className={`filter-btn ${newsMonth === m ? 'active' : ''}`}
-                  onClick={() => setNewsMonth(m)}
-                >
-                  {m === 'all' ? 'Tất cả' : `Tháng ${m.slice(5)}/${m.slice(0, 4)}`}
-                </button>
-              ))}
-            </div>
-
-            <div className="news-layout">
-              <div>
-                {/* Featured Article */}
-                <article
-                  className="news-featured clickable"
-                  onClick={() => onReadArticle(K602_FEATURED_ARTICLE)}
-                >
-                  <div className="thumb-wrap">
-                    <img
-                      src={K602_FEATURED_ARTICLE.heroImage}
-                      alt={K602_FEATURED_ARTICLE.title}
-                      className="news-real-img"
-                    />
-                  </div>
-                  <div className="news-featured-body">
-                    <span className="news-tag hoatdong">{K602_FEATURED_ARTICLE.tagLabel}</span>
-                    <h3>{K602_FEATURED_ARTICLE.title}</h3>
-                    <p>{K602_FEATURED_ARTICLE.summary}</p>
-                    <div className="news-featured-meta">
-                      <span>📅 {K602_FEATURED_ARTICLE.date}</span>
-                      <span>·</span>
-                      <span>✍️ {K602_FEATURED_ARTICLE.unit} ({K602_FEATURED_ARTICLE.author})</span>
-                      <span>·</span>
-                      <span style={{ color: 'var(--green-mid)', fontWeight: 600 }}>Xem bài viết đầy đủ →</span>
+            <div className="grid-cadre" id="libGrid">
+              {libraryTopics
+                .filter((item) => matchSearch(item.search + ' ' + item.title + ' ' + item.desc))
+                .map((item) => (
+                  <div
+                    className={`card-module ${item.isTraffic ? 'special-featured' : ''}`}
+                    key={item.code}
+                  >
+                    <span className="module-code">{item.code}</span>
+                    <h3>{item.title}</h3>
+                    <p>{item.desc}</p>
+                    <div className="card-action-bar">
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        {item.isTraffic ? 'Sẵn sàng học' : 'Mục lục chính quy'}
+                      </span>
+                      {item.isTraffic ? (
+                        <button className="btn-command" onClick={onOpenTrafficHub}>
+                          Tra cứu tài liệu →
+                        </button>
+                      ) : (
+                        <button
+                          className="btn-command"
+                          onClick={() => onShowToast('Tài liệu nghiệp vụ đang được cập nhật số hoá.')}
+                        >
+                          Tra cứu tài liệu →
+                        </button>
+                      )}
                     </div>
                   </div>
-                </article>
+                ))}
+            </div>
+          </div>
+        </section>
 
-                {/* News List */}
-                <div className="news-main">
-                  {filteredNews.map((item) => (
+        {/* LUYỆN TẬP & HỌC TẬP */}
+        <section className="section-zone alt" id="hoc-tap">
+          <div className="container">
+            <div className="section-title-bar">
+              <h2>Luyện tập &amp; Bồi dưỡng cán bộ</h2>
+            </div>
+
+            <div className="switch-tabs">
+              <button
+                className={`tab-pill ${practiceTab === 'pane-practice' ? 'active' : ''}`}
+                onClick={() => setPracticeTab('pane-practice')}
+              >
+                Hệ thống Luyện tập
+              </button>
+              <button
+                className={`tab-pill ${practiceTab === 'pane-theory' ? 'active' : ''}`}
+                onClick={() => setPracticeTab('pane-theory')}
+              >
+                Giáo trình Nghiệp vụ
+              </button>
+            </div>
+
+            {practiceTab === 'pane-practice' ? (
+              <div className="grid-cadre">
+                {practiceItems
+                  .filter((item) => matchSearch(item.search + ' ' + item.title + ' ' + item.desc))
+                  .map((item) => (
                     <div
-                      className={`news-row ${'articleData' in item ? 'clickable' : ''}`}
-                      key={item.id}
-                      onClick={() => {
-                        if ('articleData' in item && item.articleData) {
-                          onReadArticle(item.articleData as NewsArticle)
-                        }
-                      }}
+                      className={`card-module ${item.isTraffic ? 'special-featured' : ''}`}
+                      key={item.code}
                     >
-                      <div className="thumb-wrap">
-                        {item.image ? (
-                          <img src={item.image} alt={item.title} className="news-real-img" />
+                      <span className="module-code">{item.code}</span>
+                      <h3>{item.title}</h3>
+                      <p>{item.desc}</p>
+                      <div className="card-action-bar">
+                        <span className="tag-cat">{item.tag}</span>
+                        {item.isTraffic ? (
+                          <button className="btn-command" onClick={() => onStartTrafficStudy('all')}>
+                            Vào luyện tập →
+                          </button>
                         ) : (
-                          <div className={`photo-ph ${item.thumbClass}`}>
-                            {item.icon}
-                            <span className="ph-caption">Ảnh minh hoạ</span>
-                          </div>
+                          <button
+                            className="btn-command"
+                            onClick={() => onShowToast('Nội dung bài luyện tập đang được chuẩn bị.')}
+                          >
+                            Vào luyện tập →
+                          </button>
                         )}
-                      </div>
-                      <div className="news-row-body">
-                        <span className={`news-tag ${item.tag}`}>{item.tagLabel}</span>
-                        <h3>{item.title}</h3>
-                        <p>{item.desc}</p>
-                        <div className="news-row-meta">
-                          <span>{item.date}</span>
-                          <span>·</span>
-                          <span>{item.unit}</span>
-                          {'articleData' in item && <span style={{ color: 'var(--green-mid)', fontWeight: 600 }}>· Đọc toàn văn →</span>}
-                        </div>
                       </div>
                     </div>
                   ))}
-                  {filteredNews.length === 0 && (
-                    <p className="news-empty" style={{ display: 'block' }}>
-                      Không có tin tức phù hợp với bộ lọc hiện tại.
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Sidebar */}
-              <aside className="news-sidebar">
-                <h3>Đọc nhiều</h3>
-                <div className="trending-item clickable" onClick={() => onReadArticle(K602_FEATURED_ARTICLE)}>
-                  <span className="trending-rank">01</span>
-                  <h4>Kho K602 kỷ niệm 60 năm Ngày truyền thống và đón nhận Huân chương Bảo vệ Tổ quốc Hạng Nhì</h4>
-                </div>
-                <div className="trending-item"><span className="trending-rank">02</span><h4>Lịch kiểm tra chuyên đề An toàn kho tàng — tháng 9</h4></div>
-                <div className="trending-item"><span className="trending-rank">03</span><h4>Tập huấn nghiệp vụ phòng cháy, chữa cháy</h4></div>
-                <div className="trending-item"><span className="trending-rank">04</span><h4>Kiểm tra định kỳ công tác quản lý kho</h4></div>
-                <div className="trending-item"><span className="trending-rank">05</span><h4>Triển khai học tập chuyên đề chính trị quý III</h4></div>
-              </aside>
-            </div>
-          </div>
-        </section>
-
-        {/* LIBRARY */}
-        <section className="section alt" id="thu-vien">
-          <div className="container">
-            <div className="section-head">
-              <div>
-                <div className="eyebrow">Mục lục tra cứu</div>
-                <h2>Thư viện kho</h2>
-              </div>
-              <div className="section-note">Mỗi chuyên đề mang một mã mục lục riêng (TV‑xx) để tra cứu và liên kết tài liệu nhanh hơn.</div>
-            </div>
-
-            <div className="tag-grid">
-              {libraryTopics.filter((item) => matchSearch(item.search + ' ' + item.title)).map((item) => (
-                <div className={`tag-card ${item.isTraffic ? 'special-featured' : ''}`} key={item.code}>
-                  <span className="tag-code">{item.code}</span>
-                  <h3>{item.title}</h3>
-                  <p>{item.desc}</p>
-                  <hr className="tag-divider" />
-                  <div className="tag-meta">
-                    <span className={`pill ${item.isTraffic ? 'active-pill' : ''}`}>{item.status}</span>
-                    {item.isTraffic ? (
-                      <button className="tag-link" onClick={onOpenTrafficHub}>
-                        Vào học ngay →
-                      </button>
-                    ) : (
-                      <button className="tag-link" onClick={() => onShowToast('Tài liệu đang được số hoá và cập nhật.')}>
-                        Xem thư mục →
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* LEARN & PRACTICE */}
-        <section className="section" id="hoc-tap">
-          <div className="container">
-            <div className="section-head">
-              <div>
-                <div className="eyebrow">Ôn luyện theo chuyên đề</div>
-                <h2>Luyện tập &amp; Học tập</h2>
-              </div>
-              <div className="section-note">Danh mục chung với Thư viện kho — mỗi chuyên đề có bài học và bài luyện tập tương ứng.</div>
-            </div>
-
-            <div className="tabs">
-              <button
-                className={`tab-btn ${practiceTab === 'luyen-tap' ? 'active' : ''}`}
-                onClick={() => setPracticeTab('luyen-tap')}
-              >
-                Luyện tập
-              </button>
-              <button
-                className={`tab-btn ${practiceTab === 'hoc-tap' ? 'active' : ''}`}
-                onClick={() => setPracticeTab('hoc-tap')}
-              >
-                Học tập
-              </button>
-            </div>
-
-            {practiceTab === 'luyen-tap' ? (
-              <div className="tag-grid">
-                {practiceItems.filter((item) => matchSearch(item.search + ' ' + item.title)).map((item) => (
-                  <div className={`tag-card ${item.isTraffic ? 'special-featured' : ''}`} key={item.code}>
-                    <span className="tag-code">{item.code}</span>
-                    <h3>{item.title}</h3>
-                    <p>{item.desc}</p>
-                    <div className="progress-bar">
-                      <span style={{ width: `${item.progress}%` }}></span>
-                    </div>
-                    <hr className="tag-divider" />
-                    <div className="tag-meta">
-                      <span className={`pill ${item.isTraffic && item.progress > 0 ? 'active-pill' : ''}`}>{item.status}</span>
-                      {item.isTraffic ? (
-                        <button className="tag-link" onClick={() => onStartTrafficStudy('all')}>
-                          Luyện tập →
-                        </button>
-                      ) : (
-                        <button className="tag-link" onClick={() => onShowToast('Nội dung bài luyện tập đang được cập nhật.')}>
-                          Luyện tập →
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
               </div>
             ) : (
-              <div className="tag-grid">
-                {learningItems.filter((item) => matchSearch(item.search + ' ' + item.title)).map((item) => (
-                  <div className={`tag-card ${item.isTraffic ? 'special-featured' : ''}`} key={item.code}>
-                    <span className="tag-code">{item.code}</span>
-                    <h3>{item.title}</h3>
-                    <p>{item.desc}</p>
-                    <div className="progress-bar">
-                      <span style={{ width: `${item.progress}%` }}></span>
+              <div className="grid-cadre">
+                {theoryItems
+                  .filter((item) => matchSearch(item.search + ' ' + item.title + ' ' + item.desc))
+                  .map((item) => (
+                    <div
+                      className={`card-module ${item.isTraffic ? 'special-featured' : ''}`}
+                      key={item.code}
+                    >
+                      <span className="module-code">{item.code}</span>
+                      <h3>{item.title}</h3>
+                      <p>{item.desc}</p>
+                      <div className="card-action-bar">
+                        <span className="tag-cat">{item.tag}</span>
+                        {item.isTraffic ? (
+                          <button className="btn-command" onClick={onOpenTrafficHub}>
+                            Xem giáo trình →
+                          </button>
+                        ) : (
+                          <button
+                            className="btn-command"
+                            onClick={() => onShowToast('Giáo trình nghiệp vụ đang được biên soạn.')}
+                          >
+                            Xem giáo trình →
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <hr className="tag-divider" />
-                    <div className="tag-meta">
-                      <span className={`pill ${item.isTraffic && item.progress > 0 ? 'active-pill' : ''}`}>{item.status}</span>
-                      {item.isTraffic ? (
-                        <button className="tag-link" onClick={onOpenTrafficHub}>
-                          Học ngay →
-                        </button>
-                      ) : (
-                        <button className="tag-link" onClick={() => onShowToast('Nội dung bài học lý thuyết đang được cập nhật.')}>
-                          Học ngay →
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </div>
         </section>
 
-        {/* TESTS */}
-        <section className="section alt" id="kiem-tra">
+        {/* KIỂM TRA ĐÁNH GIÁ */}
+        <section className="section-zone" id="kiem-tra">
           <div className="container">
-            <div className="section-head">
-              <div>
-                <div className="eyebrow">Đề kiểm tra theo chuyên đề</div>
-                <h2>Kiểm tra</h2>
-              </div>
-              <div className="section-note">Số câu hỏi, thời gian và mức độ chuẩn theo từng chuyên đề nghiệp vụ.</div>
+            <div className="section-title-bar">
+              <h2>Kiểm tra đánh giá nhận thức</h2>
             </div>
 
-            <div className="test-list">
-              {filteredTests.map((item) => (
-                <div className={`test-row ${item.isTraffic ? 'special-test' : ''}`} key={item.code}>
-                  <span className="test-code">{item.code}</span>
-                  <div className="test-info">
-                    <h3>{item.title}</h3>
-                    <div className="test-meta">
-                      <span>{item.questionsCount}</span>
-                      <span>{item.duration}</span>
-                      <span className={`difficulty ${item.difficulty}`}>{item.diffLabel}</span>
+            <div className="exam-list" id="examContainer">
+              {examListItems
+                .filter((item) => matchSearch(item.search + ' ' + item.title))
+                .map((item) => (
+                  <div
+                    className={`exam-card ${item.isTraffic ? 'special-featured' : ''}`}
+                    key={item.code}
+                  >
+                    <div className="exam-main">
+                      <span className="exam-code">{item.code}</span>
+                      <div className="exam-title">
+                        <h3>{item.title}</h3>
+                        <div className="exam-meta">
+                          <span>{item.duration}</span>
+                          <span>{item.scope}</span>
+                          <span>{item.target}</span>
+                        </div>
+                      </div>
                     </div>
+                    {item.isTraffic ? (
+                      <button className="btn-start-exam" onClick={() => onStartTrafficExam(50, 30)}>
+                        Vào phòng thi
+                      </button>
+                    ) : (
+                      <button
+                        className="btn-start-exam"
+                        onClick={() => onShowToast('Đề thi đang trong thời gian chuẩn bị.')}
+                      >
+                        Vào phòng thi
+                      </button>
+                    )}
                   </div>
-                  {item.isTraffic ? (
-                    <button
-                      className="test-action special-action"
-                      onClick={() => onStartTrafficExam(50, 30)}
-                    >
-                      Bắt đầu thi
-                    </button>
-                  ) : (
-                    <button
-                      className="test-action"
-                      onClick={() => onShowToast('Đề kiểm tra đang được chuẩn bị.')}
-                    >
-                      Bắt đầu
-                    </button>
-                  )}
-                </div>
-              ))}
-              {filteredTests.length === 0 && (
-                <p className="news-empty" style={{ display: 'block' }}>
-                  Không có đề kiểm tra phù hợp với từ khoá tìm kiếm.
-                </p>
-              )}
+                ))}
             </div>
           </div>
         </section>
 
-        {/* ABOUT */}
-        <section className="section" id="gioi-thieu">
-          <div className="container about-grid">
-            <div>
-              <div className="eyebrow">Giới thiệu</div>
-              <h2 style={{ fontSize: '26px', textTransform: 'uppercase', margin: '8px 0 18px', color: 'var(--green-deep)' }}>
-                Kho K602
-              </h2>
-              <p>
-                Kho K602 là đơn vị trực thuộc Tổng cục Công nghiệp Quốc phòng, thực hiện nhiệm vụ quản lý, bảo quản và bảo đảm theo chức năng được giao. Cổng thông tin này được xây dựng nhằm hệ thống hoá tài liệu nghiệp vụ, hỗ trợ cán bộ, quân nhân chuyên nghiệp, chiến sĩ tự học, tự luyện và tự kiểm tra kiến thức theo từng chuyên đề.
-              </p>
-              <p>
-                Hệ thống tích hợp đầy đủ các tính năng tự ôn luyện, tự kiểm tra kiến thức sát hạch và thống kê tiến độ học tập chính xác cho từng chuyên đề.
-              </p>
+        {/* TIN TỨC HOẠT ĐỘNG & MỆNH LỆNH */}
+        <section className="section-zone alt" id="tin-tuc">
+          <div className="container">
+            <div className="section-title-bar">
+              <h2>Tin tức &amp; Hoạt động đơn vị</h2>
             </div>
-            <div className="about-card">
-              <dl>
-                <dt>Đơn vị</dt><dd>Kho K602</dd>
-                <dt>Trực thuộc</dt><dd>Tổng cục Công nghiệp Quốc phòng</dd>
-                <dt>Địa chỉ</dt><dd>Phường Vạn Xuân, tỉnh Thái Nguyên</dd>
-                <dt>Chuyên đề tích hợp</dt><dd>An toàn giao thông đường bộ (150 câu chuẩn GPLX A1)</dd>
-                <dt>Hệ thống</dt><dd>Cổng thông tin &amp; Sát hạch nội bộ</dd>
-              </dl>
+
+            <div className="news-layout-grid">
+              <div>
+                {/* Featured 60th Anniversary Article */}
+                <article
+                  className="news-card-unit"
+                  onClick={() => onReadArticle(K602_FEATURED_ARTICLE)}
+                >
+                  <div className="news-badge-icon">
+                    <img src={K602_FEATURED_ARTICLE.heroImage} alt={K602_FEATURED_ARTICLE.title} />
+                  </div>
+                  <div className="news-content">
+                    <span className="tag-cat">{K602_FEATURED_ARTICLE.tagLabel}</span>
+                    <h3>{K602_FEATURED_ARTICLE.title}</h3>
+                    <p>{K602_FEATURED_ARTICLE.summary}</p>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                      📅 {K602_FEATURED_ARTICLE.date} · ✍️ {K602_FEATURED_ARTICLE.unit} ({K602_FEATURED_ARTICLE.author}) · 👁️ {K602_FEATURED_ARTICLE.views} lượt xem
+                    </div>
+                  </div>
+                </article>
+
+                <article
+                  className="news-card-unit"
+                  onClick={() => onShowToast('Bài viết đang được chuẩn bị.')}
+                >
+                  <div className="news-badge-icon">
+                    <svg viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 16.5,13.5 18.5,21 12,16.5 5.5,21 7.5,13.5 2,9 9,9"/></svg>
+                  </div>
+                  <div className="news-content">
+                    <span className="tag-cat">Huấn luyện</span>
+                    <h3>Hội thao huấn luyện thể lực và chuyên môn kỹ thuật Quý III</h3>
+                    <p>Nâng cao chất lượng rèn luyện thể lực, tác phong chính quy và khả năng làm chủ trang bị kỹ thuật cho cán bộ, chiến sĩ trong đơn vị.</p>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                      20/08/2026 · Ban Chính trị
+                    </div>
+                  </div>
+                </article>
+
+                <article
+                  className="news-card-unit"
+                  onClick={() => onShowToast('Bài viết đang được chuẩn bị.')}
+                >
+                  <div className="news-badge-icon">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                  </div>
+                  <div className="news-content">
+                    <span className="tag-cat">Kế hoạch</span>
+                    <h3>Kế hoạch kiểm tra chuyên đề An toàn kho tàng định kỳ tháng 9</h3>
+                    <p>Phân công nhiệm vụ, thời gian và nội dung kiểm tra công tác kỹ thuật an toàn tại tất cả các phân kho độc lập.</p>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                      15/08/2026 · Ban Tham mưu
+                    </div>
+                  </div>
+                </article>
+
+                <article
+                  className="news-card-unit"
+                  onClick={() => onShowToast('Bài viết đang được chuẩn bị.')}
+                >
+                  <div className="news-badge-icon">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                  <div className="news-content">
+                    <span className="tag-cat">Kỹ thuật</span>
+                    <h3>Tổng kết công tác bảo quản, niêm cất trang bị kỹ thuật 6 tháng đầu năm</h3>
+                    <p>Đánh giá kết quả thực hiện ngày kỹ thuật, công tác đồng bộ và định hướng nhiệm vụ bảo đảm an toàn kho quý tiếp theo.</p>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                      02/08/2026 · Ban Kỹ thuật
+                    </div>
+                  </div>
+                </article>
+              </div>
+
+              {/* Văn bản chỉ đạo */}
+              <div className="order-box">
+                <h3>Văn bản chỉ đạo</h3>
+                <ul className="order-list">
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); onShowToast('Văn bản đang được lưu trữ nội bộ.'); }}>▸ Hướng dẫn công tác phòng chống cháy nổ mùa khô 2026</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); onShowToast('Văn bản đang được lưu trữ nội bộ.'); }}>▸ Quy định nghiêm ngặt về bảo đảm an toàn thông tin quân sự</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); onShowToast('Văn bản đang được lưu trữ nội bộ.'); }}>▸ Chỉ thị tăng cường xây dựng nền nếp chính quy, quản lý kỷ luật</a></li>
+                  <li><a href="#" onClick={(e) => { e.preventDefault(); onShowToast('Văn bản đang được lưu trữ nội bộ.'); }}>▸ Quy chế bảo mật và niêm phong cửa kho quân khí</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* THÔNG TIN DOANH TRẠI */}
+        <section className="section-zone" id="gioi-thieu">
+          <div className="container">
+            <div className="profile-box">
+              <div className="profile-text">
+                <h3>KHO K602</h3>
+                <p>Kho K602 là đơn vị trực thuộc Tổng cục Công nghiệp Quốc phòng, có chức năng quản lý, tiếp nhận, bảo quản, bảo dưỡng và cấp phát vật tư, trang bị kỹ thuật phục vụ cho nhiệm vụ quốc phòng an ninh.</p>
+                <p>Hệ thống Cổng thông tin nội bộ được xây dựng nhằm chuẩn hóa cơ sở dữ liệu chuyên môn, nâng cao ý thức chấp hành kỷ luật, điều lệnh và rèn luyện kỹ năng nghiệp vụ chính quy cho toàn thể quân nhân.</p>
+              </div>
+              <div>
+                <table className="data-sheet">
+                  <tbody>
+                    <tr>
+                      <th>Đơn vị:</th>
+                      <td>Kho K602</td>
+                    </tr>
+                    <tr>
+                      <th>Trực thuộc:</th>
+                      <td>Tổng cục Công nghiệp Quốc phòng</td>
+                    </tr>
+                    <tr>
+                      <th>Địa bàn:</th>
+                      <td>Phường Vạn Xuân, tỉnh Thái Nguyên</td>
+                    </tr>
+                    <tr>
+                      <th>Nhiệm vụ:</th>
+                      <td>Quản lý, bảo quản, bảo dưỡng VKTBKT</td>
+                    </tr>
+                    <tr>
+                      <th>Truyền thống:</th>
+                      <td style={{ color: 'var(--flag-red)', fontWeight: 700, letterSpacing: '0.02em' }}>
+                        ĐOÀN KẾT · ANH DŨNG · SÁNG TẠO · VƯỢT KHÓ
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </section>
@@ -758,30 +588,28 @@ function Portal({
       {/* FOOTER */}
       <footer>
         <div className="container footer-grid">
-          <div>
-            <h4>Kho K602</h4>
-            <p>Tổng cục Công nghiệp Quốc phòng<br />Phường Vạn Xuân, tỉnh Thái Nguyên</p>
+          <div className="footer-col">
+            <h4>Kho K602 · Tổng cục CNQP</h4>
+            <p>Địa chỉ: Phường Vạn Xuân, tỉnh Thái Nguyên<br />Hệ thống Quản trị tri thức nghiệp vụ &amp; Huấn luyện quân sự chính quy.</p>
           </div>
-          <div>
-            <h4>Liên kết nhanh</h4>
+          <div className="footer-col">
+            <h4>Mục lục tác chiến</h4>
             <ul>
-              <li><a href="#tin-tuc">Tin tức</a></li>
-              <li><a href="#thu-vien">Thư viện kho</a></li>
-              <li><a href="#hoc-tap">Luyện tập &amp; Học tập</a></li>
-              <li><a href="#kiem-tra">Kiểm tra</a></li>
+              <li><a href="#tin-tuc">Tin tức &amp; Mệnh lệnh</a></li>
+              <li><a href="#thu-vien">Thư viện nghiệp vụ</a></li>
+              <li><a href="#hoc-tap">Luyện tập chuyên đề</a></li>
+              <li><a href="#kiem-tra">Kiểm tra đánh giá</a></li>
             </ul>
           </div>
-          <div>
-            <h4>Liên hệ</h4>
-            <ul>
-              <li>Điện thoại: Đang cập nhật</li>
-              <li>Email: Đang cập nhật</li>
-            </ul>
+          <div className="footer-col">
+            <h4>Yêu cầu chính quy</h4>
+            <p>Tuyệt đối chấp hành quy chế bảo mật quân sự, an toàn kho tàng và điều lệnh quản lý bộ đội.</p>
           </div>
         </div>
-        <div className="container footer-bottom">
-          <span>© {new Date().getFullYear()} Kho K602 — Tổng cục Công nghiệp Quốc phòng</span>
-          <span>Cổng thông tin nội bộ</span>
+        <div className="container">
+          <div className="copyright">
+            © {new Date().getFullYear()} Kho K602 — Tổng cục Công nghiệp Quốc phòng. Mọi thông tin được quản lý nội bộ.
+          </div>
         </div>
       </footer>
     </>
@@ -801,18 +629,22 @@ function ArticleFullPage({
   return (
     <div className="article-fullpage-view">
       {/* TOP HEADER */}
-      <header className="topbar">
-        <div className="container topbar-content">
-          <div className="brand" onClick={onBackToPortal} style={{ cursor: 'pointer' }}>
-            <div className="brand-emblem">★</div>
-            <div className="brand-text">
-              <span className="brand-title">KHO K602</span>
-              <span className="brand-sub">Tổng cục Công nghiệp Quốc phòng · Phường Vạn Xuân, tỉnh Thái Nguyên</span>
+      <header className="header-wrapper">
+        <div className="brand-bar" style={{ padding: '16px 0' }}>
+          <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="brand-profile" onClick={onBackToPortal}>
+              <div className="insignia" style={{ width: '48px', height: '48px' }} title="Quân kỳ QĐND Việt Nam">
+                <svg viewBox="0 0 24 24" style={{ width: '28px', height: '28px' }}><polygon points="12,2 15,9 22,9 16.5,13.5 18.5,21 12,16.5 5.5,21 7.5,13.5 2,9 9,9"/></svg>
+              </div>
+              <div className="brand-meta">
+                <h1 style={{ fontSize: '24px' }}>KHO K602</h1>
+                <div className="sub-org" style={{ fontSize: '11px' }}>Tổng cục Công nghiệp Quốc phòng</div>
+              </div>
             </div>
+            <button className="btn-back-article" onClick={onBackToPortal}>
+              ← Quay lại Cổng thông tin
+            </button>
           </div>
-          <button className="btn-back-article" onClick={onBackToPortal}>
-            ← Quay lại Cổng thông tin
-          </button>
         </div>
       </header>
 
