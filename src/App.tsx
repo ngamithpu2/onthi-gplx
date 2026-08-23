@@ -29,10 +29,12 @@ type View = 'portal' | 'traffic-hub' | 'study' | 'exam'
 
 function mergeProgress(
   local: Record<number, QuestionProgress>,
-  remote: Record<number, QuestionProgress>,
+  remote: Record<number, QuestionProgress> | null | undefined,
 ) {
-  const result = { ...local }
+  const result = { ...(local || {}) }
+  if (!remote) return result
   for (const [id, item] of Object.entries(remote)) {
+    if (!item) continue
     const localItem = result[Number(id)]
     const localTime = localItem?.lastSeen ? new Date(localItem.lastSeen).getTime() : 0
     const remoteTime = item.lastSeen ? new Date(item.lastSeen).getTime() : 0
@@ -1610,6 +1612,7 @@ export function App() {
   // Auth bootstrap
   useEffect(() => {
     getAuthState().then(setAuth).catch(() => undefined)
+    if (!supabase) return
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         setAuth({ session: null, user: null, role: 'learner', displayName: null })
