@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { gplxA1Questions } from './modules/gplx-a1'
+import { K602_FEATURED_ARTICLE, type NewsArticle } from './data/news'
 import {
   buildExam,
   buildTodayQueue,
@@ -66,6 +67,7 @@ function Portal({
   const [searchQuery, setSearchQuery] = useState('')
   const [bannerVisible, setBannerVisible] = useState(true)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [readingArticle, setReadingArticle] = useState<NewsArticle | null>(null)
   const [clockStr, setClockStr] = useState({ day: 'Hôm nay', text: '' })
 
   // Calculate live readiness for Traffic Safety module
@@ -97,11 +99,24 @@ function Portal({
 
   const newsItems = [
     {
+      id: K602_FEATURED_ARTICLE.id,
+      month: K602_FEATURED_ARTICLE.month,
+      date: K602_FEATURED_ARTICLE.date,
+      unit: K602_FEATURED_ARTICLE.unit,
+      tag: K602_FEATURED_ARTICLE.tag,
+      tagLabel: K602_FEATURED_ARTICLE.tagLabel,
+      title: K602_FEATURED_ARTICLE.title,
+      desc: K602_FEATURED_ARTICLE.summary,
+      search: K602_FEATURED_ARTICLE.title + ' ' + K602_FEATURED_ARTICLE.unit + ' huân chương bảo vệ tổ quốc 60 năm',
+      image: K602_FEATURED_ARTICLE.heroImage,
+      articleData: K602_FEATURED_ARTICLE,
+    },
+    {
       id: 'n1',
       month: '2026-08',
       date: '15/08/2026',
       unit: 'Ban Tham mưu',
-      tag: 'thongbao',
+      tag: 'thongbao' as const,
       tagLabel: 'Thông báo',
       title: 'Lịch kiểm tra chuyên đề An toàn kho tàng — tháng 9',
       desc: 'Thông báo thời gian, hình thức kiểm tra chuyên đề An toàn kho tàng dành cho toàn thể quân nhân đơn vị.',
@@ -119,7 +134,7 @@ function Portal({
       month: '2026-08',
       date: '02/08/2026',
       unit: 'Ban Kỹ thuật',
-      tag: 'hoatdong',
+      tag: 'hoatdong' as const,
       tagLabel: 'Hoạt động',
       title: 'Tổng kết công tác bảo quản trang bị 6 tháng đầu năm',
       desc: 'Đánh giá kết quả thực hiện nhiệm vụ bảo quản, bảo dưỡng trang bị 6 tháng đầu năm và phương hướng thời gian tới.',
@@ -137,7 +152,7 @@ function Portal({
       month: '2026-07',
       date: '28/07/2026',
       unit: 'Ban Hậu cần',
-      tag: 'huanluyen',
+      tag: 'huanluyen' as const,
       tagLabel: 'Huấn luyện',
       title: 'Tập huấn nghiệp vụ phòng cháy, chữa cháy',
       desc: 'Tổ chức tập huấn, thực hành phương án chữa cháy tại các khu vực kho theo kế hoạch huấn luyện năm.',
@@ -154,7 +169,7 @@ function Portal({
       month: '2026-07',
       date: '10/07/2026',
       unit: 'Ban Chính trị',
-      tag: 'huanluyen',
+      tag: 'huanluyen' as const,
       tagLabel: 'Huấn luyện',
       title: 'Triển khai học tập chuyên đề chính trị quý III',
       desc: 'Quán triệt nội dung học tập chính trị quý III tới toàn thể cán bộ, quân nhân chuyên nghiệp, chiến sĩ.',
@@ -172,7 +187,7 @@ function Portal({
       month: '2026-06',
       date: '05/06/2026',
       unit: 'Ban Tham mưu',
-      tag: 'thongbao',
+      tag: 'thongbao' as const,
       tagLabel: 'Thông báo',
       title: 'Kiểm tra định kỳ công tác quản lý kho',
       desc: 'Thông báo kế hoạch kiểm tra định kỳ công tác quản lý, sổ sách và nghiệp vụ kho quý II.',
@@ -400,9 +415,21 @@ function Portal({
               </div>
               <div className="news-widget-list">
                 {newsItems.slice(0, 4).map((item) => (
-                  <a href="#tin-tuc" className="news-widget-item" key={item.id}>
+                  <div
+                    className="news-widget-item clickable"
+                    key={item.id}
+                    onClick={() => {
+                      if ('articleData' in item && item.articleData) {
+                        setReadingArticle(item.articleData as NewsArticle)
+                      }
+                    }}
+                  >
                     <div className="news-widget-thumb">
-                      <div className={`photo-ph ${item.thumbClass}`}>{item.icon}</div>
+                      {item.image ? (
+                        <img src={item.image} alt={item.title} className="news-real-img" />
+                      ) : (
+                        <div className={`photo-ph ${item.thumbClass}`}>{item.icon}</div>
+                      )}
                     </div>
                     <div>
                       <h4>{item.title}</h4>
@@ -412,7 +439,7 @@ function Portal({
                         <span className="wdate">{item.date.slice(0, 5)}</span>
                       </div>
                     </div>
-                  </a>
+                  </div>
                 ))}
               </div>
               <div className="news-widget-foot">
@@ -430,11 +457,11 @@ function Portal({
                 <div className="eyebrow">Cập nhật theo ngày</div>
                 <h2>Tin tức đơn vị</h2>
               </div>
-              <div className="section-note">Ảnh minh hoạ tạm thời — sẽ thay bằng ảnh thật của đơn vị khi có nội dung chính thức.</div>
+              <div className="section-note">Trang tin tức chính thức của đơn vị Kho K602 — Tổng cục Công nghiệp Quốc phòng.</div>
             </div>
 
             <div className="filter-row">
-              {['all', '2026-08', '2026-07', '2026-06'].map((m) => (
+              {['all', '2025-03', '2026-08', '2026-07', '2026-06'].map((m) => (
                 <button
                   key={m}
                   className={`filter-btn ${newsMonth === m ? 'active' : ''}`}
@@ -448,25 +475,27 @@ function Portal({
             <div className="news-layout">
               <div>
                 {/* Featured Article */}
-                <article className="news-featured">
+                <article
+                  className="news-featured clickable"
+                  onClick={() => setReadingArticle(K602_FEATURED_ARTICLE)}
+                >
                   <div className="thumb-wrap">
-                    <div className="photo-ph ph-red">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6">
-                        <path d="M13 4l-9 9h5l-1 7 9-9h-5l1-7z" />
-                      </svg>
-                      <span className="ph-caption">Ảnh minh hoạ</span>
-                    </div>
+                    <img
+                      src={K602_FEATURED_ARTICLE.heroImage}
+                      alt={K602_FEATURED_ARTICLE.title}
+                      className="news-real-img"
+                    />
                   </div>
                   <div className="news-featured-body">
-                    <span className="news-tag hoatdong">Hoạt động</span>
-                    <h3>Hội thao huấn luyện thể lực quý III</h3>
-                    <p>
-                      Đơn vị tổ chức hội thao rèn luyện thể lực cho cán bộ, chiến sĩ nhân dịp tổng kết công tác huấn luyện quý III, với nhiều nội dung thi đấu đồng đội và cá nhân.
-                    </p>
+                    <span className="news-tag hoatdong">{K602_FEATURED_ARTICLE.tagLabel}</span>
+                    <h3>{K602_FEATURED_ARTICLE.title}</h3>
+                    <p>{K602_FEATURED_ARTICLE.summary}</p>
                     <div className="news-featured-meta">
-                      <span>20/08/2026</span>
+                      <span>📅 {K602_FEATURED_ARTICLE.date}</span>
                       <span>·</span>
-                      <span>Ban Chính trị</span>
+                      <span>✍️ {K602_FEATURED_ARTICLE.unit} ({K602_FEATURED_ARTICLE.author})</span>
+                      <span>·</span>
+                      <span style={{ color: 'var(--green-mid)', fontWeight: 600 }}>Xem bài viết đầy đủ →</span>
                     </div>
                   </div>
                 </article>
@@ -474,12 +503,24 @@ function Portal({
                 {/* News List */}
                 <div className="news-main">
                   {filteredNews.map((item) => (
-                    <div className="news-row" key={item.id}>
+                    <div
+                      className={`news-row ${'articleData' in item ? 'clickable' : ''}`}
+                      key={item.id}
+                      onClick={() => {
+                        if ('articleData' in item && item.articleData) {
+                          setReadingArticle(item.articleData as NewsArticle)
+                        }
+                      }}
+                    >
                       <div className="thumb-wrap">
-                        <div className={`photo-ph ${item.thumbClass}`}>
-                          {item.icon}
-                          <span className="ph-caption">Ảnh minh hoạ</span>
-                        </div>
+                        {item.image ? (
+                          <img src={item.image} alt={item.title} className="news-real-img" />
+                        ) : (
+                          <div className={`photo-ph ${item.thumbClass}`}>
+                            {item.icon}
+                            <span className="ph-caption">Ảnh minh hoạ</span>
+                          </div>
+                        )}
                       </div>
                       <div className="news-row-body">
                         <span className={`news-tag ${item.tag}`}>{item.tagLabel}</span>
@@ -489,6 +530,7 @@ function Portal({
                           <span>{item.date}</span>
                           <span>·</span>
                           <span>{item.unit}</span>
+                          {'articleData' in item && <span style={{ color: 'var(--green-mid)', fontWeight: 600 }}>· Đọc toàn văn →</span>}
                         </div>
                       </div>
                     </div>
@@ -504,8 +546,11 @@ function Portal({
               {/* Sidebar */}
               <aside className="news-sidebar">
                 <h3>Đọc nhiều</h3>
-                <div className="trending-item"><span className="trending-rank">01</span><h4>Lịch kiểm tra chuyên đề An toàn kho tàng — tháng 9</h4></div>
-                <div className="trending-item"><span className="trending-rank">02</span><h4>Hội thao huấn luyện thể lực quý III</h4></div>
+                <div className="trending-item clickable" onClick={() => setReadingArticle(K602_FEATURED_ARTICLE)}>
+                  <span className="trending-rank">01</span>
+                  <h4>Kho K602 kỷ niệm 60 năm Ngày truyền thống và đón nhận Huân chương Bảo vệ Tổ quốc Hạng Nhì</h4>
+                </div>
+                <div className="trending-item"><span className="trending-rank">02</span><h4>Lịch kiểm tra chuyên đề An toàn kho tàng — tháng 9</h4></div>
                 <div className="trending-item"><span className="trending-rank">03</span><h4>Tập huấn nghiệp vụ phòng cháy, chữa cháy</h4></div>
                 <div className="trending-item"><span className="trending-rank">04</span><h4>Kiểm tra định kỳ công tác quản lý kho</h4></div>
                 <div className="trending-item"><span className="trending-rank">05</span><h4>Triển khai học tập chuyên đề chính trị quý III</h4></div>
@@ -738,6 +783,69 @@ function Portal({
           <span>Cổng thông tin nội bộ</span>
         </div>
       </footer>
+
+      {/* ARTICLE VIEWER MODAL */}
+      {readingArticle && (
+        <div className="article-modal-backdrop" onClick={() => setReadingArticle(null)}>
+          <article className="article-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="article-modal-header">
+              <h3>Tin tức đơn vị · Kho K602</h3>
+              <button
+                className="article-close-btn"
+                onClick={() => setReadingArticle(null)}
+                aria-label="Đóng bài viết"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="article-modal-body">
+              <h1 className="article-title">{readingArticle.title}</h1>
+              <div className="article-meta-bar">
+                <span>📅 <strong>Ngày đăng:</strong> {readingArticle.date}</span>
+                <span>✍️ <strong>Tác giả:</strong> {readingArticle.author} ({readingArticle.unit})</span>
+                <span>👁️ <strong>Lượt xem:</strong> {readingArticle.views}</span>
+                <span className={`news-tag ${readingArticle.tag}`}>{readingArticle.tagLabel}</span>
+              </div>
+
+              <div className="article-content">
+                {readingArticle.content.map((block, idx) => {
+                  if (block.type === 'paragraph') {
+                    return (
+                      <p key={idx} className="article-paragraph">
+                        {block.text}
+                      </p>
+                    )
+                  }
+                  if (block.type === 'image' && block.imageUrl) {
+                    return (
+                      <figure key={idx} className="article-image-wrap">
+                        <img src={block.imageUrl} alt={block.caption || 'Hình ảnh tư liệu'} />
+                        {block.caption && (
+                          <figcaption className="article-image-caption">
+                            {block.caption}
+                          </figcaption>
+                        )}
+                      </figure>
+                    )
+                  }
+                  return null
+                })}
+
+                <div className="article-author-sign">
+                  {readingArticle.author}
+                </div>
+              </div>
+            </div>
+
+            <div className="article-modal-footer">
+              <button className="primary-button" onClick={() => setReadingArticle(null)}>
+                Đóng bài viết
+              </button>
+            </div>
+          </article>
+        </div>
+      )}
     </>
   )
 }
