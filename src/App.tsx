@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { gplxA1Questions } from './modules/gplx-a1'
-import { PORTAL_MODULES, type PortalModule } from './config/modules'
 import {
   buildExam,
   buildTodayQueue,
@@ -11,14 +10,8 @@ import {
 import { INITIAL_STATE, loadLocalState, saveLocalState } from './storage'
 import {
   getAuthState,
-  loadAdminSummary,
-  loadExamProfile,
   loadRemoteProgress,
-  signIn,
-  signOut,
   supabase,
-  syncAttempts,
-  syncProgress,
   type AuthState,
 } from './supabase'
 import type {
@@ -32,7 +25,7 @@ import type {
 } from './types'
 
 const LETTERS = ['A', 'B', 'C', 'D']
-type View = 'portal' | 'traffic-hub' | 'study' | 'exam' | 'admin'
+type View = 'portal' | 'traffic-hub' | 'study' | 'exam'
 
 function mergeProgress(
   local: Record<number, QuestionProgress>,
@@ -46,16 +39,6 @@ function mergeProgress(
     if (!localItem || remoteTime > localTime) result[Number(id)] = item
   }
   return result
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return 'Chưa hoạt động'
-  return new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value))
 }
 
 /* =========================================================================
@@ -81,7 +64,7 @@ function Portal({
   const [searchQuery, setSearchQuery] = useState('')
   const [bannerVisible, setBannerVisible] = useState(true)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [clockStr, setClockStr] = useState({ day: '', text: '' })
+  const [clockStr, setClockStr] = useState({ day: 'Hôm nay', text: '' })
 
   // Calculate live readiness for Traffic Safety module
   const readiness = getReadiness(questions, state.progress)
@@ -1579,8 +1562,14 @@ function Exam({
 export function App() {
   const [view, setView] = useState<View>('portal')
   const [state, setState] = useState<LocalState>(() => loadLocalState() ?? INITIAL_STATE)
-  const [auth, setAuth] = useState<AuthState>({ session: null, user: null, role: 'learner', displayName: null })
-  const [examProfile, setExamProfile] = useState<ExamProfile>(DEFAULT_EXAM_PROFILE)
+  const [_auth, setAuth] = useState<AuthState>({ session: null, user: null, role: 'learner', displayName: null })
+  const [examProfile, setExamProfile] = useState<ExamProfile>({
+    name: 'Thi thử 50 câu - 30 phút',
+    questionCount: 50,
+    durationMinutes: 30,
+    passScore: 42,
+    criticalRule: 'unverified',
+  })
   const [studyQueue, setStudyQueue] = useState<Question[]>([])
   const [studySessionKey, setStudySessionKey] = useState<string>('')
   const [studyInitialIndex, setStudyInitialIndex] = useState<number>(0)
@@ -1618,14 +1607,14 @@ export function App() {
 
   // Sync with remote progress when signed in
   useEffect(() => {
-    if (!auth.user) return
-    loadRemoteProgress(auth.user.id).then((remote) => {
+    if (!_auth.user) return
+    loadRemoteProgress(_auth.user.id).then((remote) => {
       setState((prev) => ({
         ...prev,
         progress: mergeProgress(prev.progress, remote),
       }))
     }).catch(() => undefined)
-  }, [auth.user])
+  }, [_auth.user])
 
   const startTrafficStudy = (mode: Exclude<StudyMode, 'exam'>) => {
     const key = `mode:${mode}`
@@ -1677,10 +1666,10 @@ export function App() {
 
   const startTrafficExam = (questionCount: number, durationMinutes: number) => {
     setExamProfile({
-      name: `Thi thử sát hạch ${questionCount} câu`,
+      name: `Thi thử sát hạch ${questionCount} câu - ${durationMinutes} phút`,
       questionCount,
       durationMinutes,
-      passScore: null,
+      passScore: 42,
       criticalRule: 'unverified',
     })
     setView('exam')
