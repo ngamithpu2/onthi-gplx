@@ -26,7 +26,7 @@ import type {
 } from './types'
 
 const LETTERS = ['A', 'B', 'C', 'D']
-type View = 'portal' | 'traffic-hub' | 'study' | 'exam'
+type View = 'portal' | 'article' | 'traffic-hub' | 'study' | 'exam'
 
 function mergeProgress(
   local: Record<number, QuestionProgress>,
@@ -53,6 +53,7 @@ function Portal({
   onOpenTrafficHub,
   onStartTrafficStudy,
   onStartTrafficExam,
+  onReadArticle,
   onShowToast,
 }: {
   questions: Question[]
@@ -60,6 +61,7 @@ function Portal({
   onOpenTrafficHub: () => void
   onStartTrafficStudy: (mode: Exclude<StudyMode, 'exam'>) => void
   onStartTrafficExam: (questionCount: number, durationMinutes: number) => void
+  onReadArticle: (article: NewsArticle) => void
   onShowToast: (msg?: string) => void
 }) {
   const [newsMonth, setNewsMonth] = useState<string>('all')
@@ -67,7 +69,6 @@ function Portal({
   const [searchQuery, setSearchQuery] = useState('')
   const [bannerVisible, setBannerVisible] = useState(true)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [readingArticle, setReadingArticle] = useState<NewsArticle | null>(null)
   const [clockStr, setClockStr] = useState({ day: 'Hôm nay', text: '' })
 
   // Calculate live readiness for Traffic Safety module
@@ -420,7 +421,7 @@ function Portal({
                     key={item.id}
                     onClick={() => {
                       if ('articleData' in item && item.articleData) {
-                        setReadingArticle(item.articleData as NewsArticle)
+                        onReadArticle(item.articleData as NewsArticle)
                       }
                     }}
                   >
@@ -477,7 +478,7 @@ function Portal({
                 {/* Featured Article */}
                 <article
                   className="news-featured clickable"
-                  onClick={() => setReadingArticle(K602_FEATURED_ARTICLE)}
+                  onClick={() => onReadArticle(K602_FEATURED_ARTICLE)}
                 >
                   <div className="thumb-wrap">
                     <img
@@ -508,7 +509,7 @@ function Portal({
                       key={item.id}
                       onClick={() => {
                         if ('articleData' in item && item.articleData) {
-                          setReadingArticle(item.articleData as NewsArticle)
+                          onReadArticle(item.articleData as NewsArticle)
                         }
                       }}
                     >
@@ -546,7 +547,7 @@ function Portal({
               {/* Sidebar */}
               <aside className="news-sidebar">
                 <h3>Đọc nhiều</h3>
-                <div className="trending-item clickable" onClick={() => setReadingArticle(K602_FEATURED_ARTICLE)}>
+                <div className="trending-item clickable" onClick={() => onReadArticle(K602_FEATURED_ARTICLE)}>
                   <span className="trending-rank">01</span>
                   <h4>Kho K602 kỷ niệm 60 năm Ngày truyền thống và đón nhận Huân chương Bảo vệ Tổ quốc Hạng Nhì</h4>
                 </div>
@@ -783,70 +784,160 @@ function Portal({
           <span>Cổng thông tin nội bộ</span>
         </div>
       </footer>
-
-      {/* ARTICLE VIEWER MODAL */}
-      {readingArticle && (
-        <div className="article-modal-backdrop" onClick={() => setReadingArticle(null)}>
-          <article className="article-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="article-modal-header">
-              <h3>Tin tức đơn vị · Kho K602</h3>
-              <button
-                className="article-close-btn"
-                onClick={() => setReadingArticle(null)}
-                aria-label="Đóng bài viết"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="article-modal-body">
-              <h1 className="article-title">{readingArticle.title}</h1>
-              <div className="article-meta-bar">
-                <span>📅 <strong>Ngày đăng:</strong> {readingArticle.date}</span>
-                <span>✍️ <strong>Tác giả:</strong> {readingArticle.author} ({readingArticle.unit})</span>
-                <span>👁️ <strong>Lượt xem:</strong> {readingArticle.views}</span>
-                <span className={`news-tag ${readingArticle.tag}`}>{readingArticle.tagLabel}</span>
-              </div>
-
-              <div className="article-content">
-                {readingArticle.content.map((block, idx) => {
-                  if (block.type === 'paragraph') {
-                    return (
-                      <p key={idx} className="article-paragraph">
-                        {block.text}
-                      </p>
-                    )
-                  }
-                  if (block.type === 'image' && block.imageUrl) {
-                    return (
-                      <figure key={idx} className="article-image-wrap">
-                        <img src={block.imageUrl} alt={block.caption || 'Hình ảnh tư liệu'} />
-                        {block.caption && (
-                          <figcaption className="article-image-caption">
-                            {block.caption}
-                          </figcaption>
-                        )}
-                      </figure>
-                    )
-                  }
-                  return null
-                })}
-
-                <div className="article-author-sign">
-                  {readingArticle.author}
-                </div>
-              </div>
-            </div>
-
-            <div className="article-modal-footer">
-              <button className="primary-button" onClick={() => setReadingArticle(null)}>
-                Đóng bài viết
-              </button>
-            </div>
-          </article>
-        </div>
-      )}
     </>
+  )
+}
+
+/* =========================================================================
+   ARTICLE FULL-PAGE VIEW COMPONENT (Xem toàn trang bài viết)
+   ========================================================================= */
+function ArticleFullPage({
+  article,
+  onBackToPortal,
+}: {
+  article: NewsArticle
+  onBackToPortal: () => void
+}) {
+  return (
+    <div className="article-fullpage-view">
+      {/* TOP HEADER */}
+      <header className="topbar">
+        <div className="container topbar-content">
+          <div className="brand" onClick={onBackToPortal} style={{ cursor: 'pointer' }}>
+            <div className="brand-emblem">★</div>
+            <div className="brand-text">
+              <span className="brand-title">KHO K602</span>
+              <span className="brand-sub">Tổng cục Công nghiệp Quốc phòng · Phường Vạn Xuân, tỉnh Thái Nguyên</span>
+            </div>
+          </div>
+          <button className="btn-back-article" onClick={onBackToPortal}>
+            ← Quay lại Cổng thông tin
+          </button>
+        </div>
+      </header>
+
+      {/* BREADCRUMB BAR */}
+      <div className="article-breadcrumb-bar">
+        <div className="container article-breadcrumb-content">
+          <div className="article-breadcrumb-trail">
+            <span style={{ cursor: 'pointer' }} onClick={onBackToPortal}>Trang chủ</span>
+            <span>/</span>
+            <span style={{ cursor: 'pointer' }} onClick={onBackToPortal}>Tin tức đơn vị</span>
+            <span>/</span>
+            <span style={{ color: 'var(--green-deep)', fontWeight: 600 }}>{article.tagLabel}</span>
+          </div>
+          <button className="btn-back-article" onClick={onBackToPortal}>
+            ← Quay lại Trang chủ
+          </button>
+        </div>
+      </div>
+
+      {/* MAIN ARTICLE BODY */}
+      <main className="article-container">
+        <article className="article-paper">
+          <header className="article-header">
+            <span className="article-badge-top">Tin tức đơn vị · {article.tagLabel}</span>
+            <h1 className="article-main-title">{article.title}</h1>
+            <div className="article-meta-row">
+              <div className="article-meta-item">
+                <span>📅 Ngày đăng:</span>
+                <strong>{article.date}</strong>
+              </div>
+              <span>·</span>
+              <div className="article-meta-item">
+                <span>✍️ Tác giả:</span>
+                <strong>{article.author} ({article.unit})</strong>
+              </div>
+              <span>·</span>
+              <div className="article-meta-item">
+                <span>👁️ Lượt xem:</span>
+                <strong>{article.views}</strong>
+              </div>
+            </div>
+          </header>
+
+          {article.summary && (
+            <div className="article-sapo">
+              {article.summary}
+            </div>
+          )}
+
+          <div className="article-body-content">
+            {article.content.map((block, idx) => {
+              if (block.type === 'paragraph' && block.text) {
+                return (
+                  <p key={idx} className="article-paragraph">
+                    {block.text}
+                  </p>
+                )
+              }
+              if (block.type === 'image' && block.imageUrl) {
+                return (
+                  <figure key={idx} className="article-figure">
+                    <img src={block.imageUrl} alt={block.caption || 'Hình ảnh tư liệu'} loading="lazy" />
+                    {block.caption && (
+                      <figcaption>{block.caption}</figcaption>
+                    )}
+                  </figure>
+                )
+              }
+              return null
+            })}
+
+            <div className="article-signature-box">
+              <div>
+                <span className="news-tag hoatdong">{article.tagLabel}</span>
+              </div>
+              <div className="article-signature-text">
+                <div className="author-name">{article.author}</div>
+                <div className="unit-name">{article.unit} — Kho K602</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="article-bottom-nav">
+            <button className="btn-back-article" onClick={onBackToPortal}>
+              ← Quay lại Cổng thông tin
+            </button>
+            <button
+              className="subtle-button"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              Lên đầu trang ↑
+            </button>
+          </div>
+        </article>
+      </main>
+
+      {/* FOOTER */}
+      <footer>
+        <div className="container footer-grid">
+          <div>
+            <h4>Kho K602</h4>
+            <p>Tổng cục Công nghiệp Quốc phòng<br />Phường Vạn Xuân, tỉnh Thái Nguyên</p>
+          </div>
+          <div>
+            <h4>Liên kết nhanh</h4>
+            <ul>
+              <li><a href="#" onClick={(e) => { e.preventDefault(); onBackToPortal(); }}>Trang chủ</a></li>
+              <li><a href="#" onClick={(e) => { e.preventDefault(); onBackToPortal(); }}>Thư viện kho</a></li>
+              <li><a href="#" onClick={(e) => { e.preventDefault(); onBackToPortal(); }}>Kiểm tra</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Liên hệ</h4>
+            <ul>
+              <li>Điện thoại: Đang cập nhật</li>
+              <li>Email: Đang cập nhật</li>
+            </ul>
+          </div>
+        </div>
+        <div className="container footer-bottom">
+          <span>© {new Date().getFullYear()} Kho K602 — Tổng cục Công nghiệp Quốc phòng</span>
+          <span>Cổng thông tin nội bộ</span>
+        </div>
+      </footer>
+    </div>
   )
 }
 
@@ -1801,6 +1892,14 @@ export function App() {
     setView('exam')
   }
 
+  const [currentArticle, setCurrentArticle] = useState<NewsArticle | null>(K602_FEATURED_ARTICLE)
+
+  const handleReadArticle = (article: NewsArticle) => {
+    setCurrentArticle(article)
+    setView('article')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
     <div className="app">
       {view === 'portal' && (
@@ -1810,7 +1909,18 @@ export function App() {
           onOpenTrafficHub={() => setView('traffic-hub')}
           onStartTrafficStudy={startTrafficStudy}
           onStartTrafficExam={startTrafficExam}
+          onReadArticle={handleReadArticle}
           onShowToast={showToast}
+        />
+      )}
+
+      {view === 'article' && (
+        <ArticleFullPage
+          article={currentArticle || K602_FEATURED_ARTICLE}
+          onBackToPortal={() => {
+            setView('portal')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
         />
       )}
 
