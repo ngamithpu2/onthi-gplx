@@ -1561,7 +1561,7 @@ function Exam({
    ========================================================================= */
 export function App() {
   const [view, setView] = useState<View>('portal')
-  const [state, setState] = useState<LocalState>(() => loadLocalState() ?? INITIAL_STATE)
+  const [state, setState] = useState<LocalState>(INITIAL_STATE)
   const [_auth, setAuth] = useState<AuthState>({ session: null, user: null, role: 'learner', displayName: null })
   const [examProfile, setExamProfile] = useState<ExamProfile>({
     name: 'Thi thử 50 câu - 30 phút',
@@ -1587,9 +1587,24 @@ export function App() {
     toastTimer.current = window.setTimeout(() => setToastVisible(false), 2600)
   }
 
+  // Load local state from IndexedDB on initial mount
+  useEffect(() => {
+    loadLocalState().then((loaded) => {
+      if (loaded && loaded.progress) {
+        setState((prev) => ({
+          ...prev,
+          ...loaded,
+          progress: { ...(prev.progress || {}), ...(loaded.progress || {}) },
+        }))
+      }
+    }).catch(() => undefined)
+  }, [])
+
   // Save local state
   useEffect(() => {
-    saveLocalState(state)
+    if (state && state.progress) {
+      saveLocalState(state).catch(() => undefined)
+    }
   }, [state])
 
   // Auth bootstrap

@@ -52,29 +52,31 @@ export function buildTodayQueue(
   progress: Record<number, QuestionProgress>,
   limit = 20,
 ): Question[] {
+  const p = progress || {}
   const now = Date.now()
   const due = questions
     .filter((question) => {
-      const item = progress[question.id]
-      return item?.nextDue && new Date(item.nextDue).getTime() <= now
+      const item = p[question.id]
+      if (!item?.seen || !item.nextDue) return false
+      return new Date(item.nextDue).getTime() <= now
     })
     .sort((a, b) => {
-      const left = new Date(progress[a.id].nextDue ?? 0).getTime()
-      const right = new Date(progress[b.id].nextDue ?? 0).getTime()
-      return left - right
+      const dueA = new Date(p[a.id]?.nextDue || 0).getTime()
+      const dueB = new Date(p[b.id]?.nextDue || 0).getTime()
+      return dueA - dueB
     })
   const weak = questions
     .filter((question) => {
-      const item = progress[question.id]
+      const item = p[question.id]
       return Boolean(item && item.lastResult === 'wrong')
     })
-    .sort((a, b) => (progress[a.id]?.mastery ?? 0) - (progress[b.id]?.mastery ?? 0))
+    .sort((a, b) => (p[a.id]?.mastery ?? 0) - (p[b.id]?.mastery ?? 0))
   const unseen = seededSort(
-    questions.filter((question) => !progress[question.id]?.seen),
+    questions.filter((question) => !p[question.id]?.seen),
     new Date().getDate() + new Date().getMonth() * 31,
   )
   const critical = questions.filter(
-    (question) => question.critical && (progress[question.id]?.mastery ?? 0) < 3,
+    (question) => question.critical && (p[question.id]?.mastery ?? 0) < 3,
   )
 
   const desiredDue = Math.ceil(limit * 0.5)
@@ -96,10 +98,11 @@ export function selectModeQuestions(
   questions: Question[],
   progress: Record<number, QuestionProgress>,
 ): Question[] {
+  const p = progress || {}
   if (mode === 'critical') return questions.filter((question) => question.critical)
   if (mode === 'weak') {
     return questions.filter((question) => {
-      const item = progress[question.id]
+      const item = p[question.id]
       return Boolean(item && item.lastResult === 'wrong')
     })
   }
@@ -174,11 +177,12 @@ export function getReadiness(
   questions: Question[],
   progress: Record<number, QuestionProgress>,
 ) {
-  const seen = questions.filter((question) => (progress[question.id]?.seen ?? 0) > 0).length
-  const mastered = questions.filter((question) => (progress[question.id]?.mastery ?? 0) >= 3).length
+  const p = progress || {}
+  const seen = questions.filter((question) => (p[question.id]?.seen ?? 0) > 0).length
+  const mastered = questions.filter((question) => (p[question.id]?.mastery ?? 0) >= 3).length
   const critical = questions.filter((question) => question.critical)
   const criticalMastered = critical.filter(
-    (question) => (progress[question.id]?.mastery ?? 0) >= 3,
+    (question) => (p[question.id]?.mastery ?? 0) >= 3,
   ).length
   const score = questions.length > 0 ? Math.min(100, Math.max(0, Math.round((seen / questions.length) * 100))) : 0
   return { score, seen, mastered, criticalMastered, criticalTotal: critical.length }
